@@ -1,4 +1,4 @@
-class ArgumentError extends Error {
+export class ArgumentError extends Error {
   constructor(message: string) {
     super(message);
     this.name = 'ArgumentError';

@@ -1,4 +1,5 @@
-class Device {
+import { ArgumentError } from "./argument-error.mjs"
+export class Device {
     private token: string;
     private platform: string;
     constructor(token: string, platform: string) {

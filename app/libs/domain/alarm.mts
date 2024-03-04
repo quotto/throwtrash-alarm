@@ -1,4 +1,8 @@
-class Alarm {
+import { Device } from "./device.mjs";
+import { User } from "./user.mjs";
+import { ArgumentError } from "./argument-error.mjs"
+
+export class Alarm {
     private device: Device;
     private time: string;
     private user: User;

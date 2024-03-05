@@ -7,8 +7,9 @@
     "test": "jest"
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.525.0",
+    "@aws-sdk/client-scheduler": "^3.525.0",
     "@types/aws-lambda": "^8.10.134",
-    "aws-sdk": "^2.1569.0",
     "trash-common": "github:quotto/throwtrash-common-module#v3.0"
   },
   "type": "module",

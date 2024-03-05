@@ -1,3 +1,9 @@
+import { Alarm } from "../domain/alarm.mjs";
+import { Device } from "../domain/device.mjs";
+import { User } from "../domain/user.mjs";
+import { AlarmRepositoryInterface } from "./alarm-repository-interface.mjs";
+import { AlarmTriggerConnectorInterface } from "./alarm-trigger-connector-interface.mjs";
+
 const registerAlarm = async (alarmRepository: AlarmRepositoryInterface, alarmTriggerConnector: AlarmTriggerConnectorInterface,deviceToken: string, time: string, userId: string, platform: string) => {
     const newAlarm = new Alarm(new Device(deviceToken, platform), time,new User(userId))
     if(await alarmTriggerConnector.findByTime(time) === null) {

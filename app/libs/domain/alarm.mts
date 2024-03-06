@@ -24,4 +24,8 @@ export class Alarm {
     getUser(): User {
         return this.user;
     }
+
+    updateTime(time: string): Alarm {
+        return new Alarm(this.device, time, this.user);
+    }
 }

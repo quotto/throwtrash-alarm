@@ -1,12 +1,12 @@
-import { DeleteItemCommand, DynamoDBClient,GetItemCommand, PutItemCommand, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
+import { DeleteItemCommand, DynamoDBClient,DynamoDBClientConfig,GetItemCommand, PutItemCommand, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
 import { AlarmRepositoryInterface } from '../service/alarm-repository-interface.mjs';
 import { Alarm } from '../domain/alarm.mjs';
 import { Device } from '../domain/device.mjs';
 import { User } from '../domain/user.mjs';
 export class AlarmRepository implements AlarmRepositoryInterface{
   db: DynamoDBClient;
-  constructor(db: DynamoDBClient) {
-    this.db = db;
+  constructor(config: DynamoDBClientConfig) {
+    this.db = new DynamoDBClient(config);
   }
   async findByDeviceToken(deviceToken: string): Promise<Alarm | null> {
     try {

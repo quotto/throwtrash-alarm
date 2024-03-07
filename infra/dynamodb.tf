@@ -1,4 +1,4 @@
-resource "aws_dynamodb_table" "alarm_table" {
+resource "aws_dynamodb_table" "throwtrash-alarm-table" {
   name           = "alarm"
   billing_mode   = "PAY_PER_REQUEST"
   hash_key       = "device_token"
@@ -20,8 +20,5 @@ resource "aws_dynamodb_table" "alarm_table" {
     projection_type    = "INCLUDE"
     non_key_attributes = [ "user_id" ]
   }
-  tags = {
-    app = "throwtrash"
-    group = "alarm"
-  }
+  tags = local.tags
 }

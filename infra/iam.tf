@@ -21,27 +21,34 @@ resource "aws_iam_policy" "throwtrash-alarm-lambda-policy" {
     "Version": "2012-10-17",
     "Statement": [
         {
+            "Sid": "DynamoDBPolicy",
             "Action": [
                 "dynamodb:*"
             ],
             "Effect": "Allow",
-            "Resource": "${aws_dynamodb_table.throwtrash-alarm-table.arn}"
+            "Resource": [
+                "${aws_dynamodb_table.throwtrash-alarm-table.arn}"
+            ]
         },
         {
+            "Sid": "SchedulerPolicy",
             "Action": [
-                "scheduler: *",
+                "scheduler: *"
             ],
             "Effect": "Allow",
-            "Resource": "${aws_scheduler_schedule_group.throwtrash-alarm-schedule-group.arn}/*"
+            "Resource": [
+                "${aws_scheduler_schedule_group.throwtrash-alarm-schedule-group.arn}/*"
+            ]
         },
-        }
+        {
+            "Sid": "CloudWatchPolicy",
             "Effect": "Allow",
             "Action": [
                 "logs:CreateLogStream",
                 "logs:PutLogEvents"
             ],
             "Resource": [
-                "arn:aws:logs:${data.aws_region.current}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/throwtrash-alarm:*"
+                "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/throwtrash-alarm:*"
             ]
         }
     ]

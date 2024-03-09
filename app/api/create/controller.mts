@@ -17,7 +17,7 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayEvent, _c
         const eventBridgeSchedulerClientConfig: SchedulerClientConfig = {
             region: 'ap-northeast-1',
         };
-        const alarmTriggerConnector = new AlarmTriggerConnector({}, process.env.EVENT_BRIDGE_SCHEDULER_GROUP_NAME!);
+        const alarmTriggerConnector = new AlarmTriggerConnector({}, process.env.EVENT_BRIDGE_SCHEDULER_GROUP_NAME!, process.env.ALARM_TRIGGER_FUNCTION_ARN!, process.env.ALARM_TRIGGER_FUNCTION_ROLE_ARN!);
 
         const params = event.body ? JSON.parse(event.body) : {};
         const { device_token, alarm_time, user_id, platform } = params;

@@ -4,12 +4,22 @@ import { ResourceNotFoundException, CreateScheduleCommand, SchedulerClient, Flex
 export class AlarmTriggerConnector implements AlarmTriggerConnectorInterface {
     private scheduler: SchedulerClient;
     private group_name: string;
-    constructor(config: SchedulerClientConfig,group_name: string = "throwtrash-alarm") {
+    private alarm_trigger_function_arn: string;
+    private alarm_trigger_function_role_arn: string;
+    constructor(config: SchedulerClientConfig,group_name: string = "throwtrash-alarm", trigger_function_arn: string, trigger_function_role_arn: string) {
         if(group_name === "") {
             throw new Error("EventBridgeSchdulerのグループ名が指定されていません")
         }
+        if(trigger_function_arn === "") {
+            throw new Error("アラームトリガー用のLambda関数のARNが指定されていません")
+        }
+        if(trigger_function_role_arn === "") {
+            throw new Error("アラームトリガー用のLambda関数の実行ロールのARNが指定されていません")
+        }
         this.scheduler = new SchedulerClient(config);
         this.group_name = group_name;
+        this.alarm_trigger_function_arn = trigger_function_arn;
+        this.alarm_trigger_function_role_arn = trigger_function_role_arn;
     }
     async create(time: string): Promise<boolean> {
         const event_bridge_scheduler_name = `throwtrash-alarm-${time}`;
@@ -23,8 +33,8 @@ export class AlarmTriggerConnector implements AlarmTriggerConnectorInterface {
                 ScheduleExpressionTimezone: "Asia/Tokyo",
                 GroupName: this.group_name,
                 Target: {
-                    Arn: process.env.ALARM_TRIGGER_LAMBDA_ARN!,
-                    RoleArn: process.env.ALARM_TRIGGER_LAMBDA_ROLE_ARN!
+                    Arn: this.alarm_trigger_function_arn,
+                    RoleArn: this.alarm_trigger_function_role_arn
                 },
                 State: "ENABLED",
                 Description: "ゴミ捨てのアラーム",

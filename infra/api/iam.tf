@@ -61,3 +61,47 @@ resource "aws_iam_role_policy_attachment" "lambda-policy-attachment" {
     role = aws_iam_role.throwtrash-alarm-lambda-role.name
     policy_arn = aws_iam_policy.throwtrash-alarm-lambda-policy.arn
 }
+
+// EventBridge SchedulerがLambdaを実行するためのポリシーとロールを作成
+data "aws_iam_policy_document" "scheduler_lambda_assume_role_policy" {
+    statement {
+        actions = ["sts:AssumeRole"]
+        principals {
+            type        = "Service"
+            identifiers = ["events.amazonaws.com"]
+        }
+    }
+}
+
+resource "aws_iam_role" "throwtrash-alarm-scheduler-lambda-role" {
+    name               = "throwtrash-alarm-scheduler-role"
+    assume_role_policy = data.aws_iam_policy_document.lambda_assume_role_policy.json
+    tags = local.tags
+
+}
+resource "aws_iam_policy" "throwtrash-alarm-scheduler-lambda-policy" {
+    name   = "throwtrash-alarm-scheduler-policy"
+    policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "LambdaPolicy",
+            "Action": [
+                "lambda:InvokeFunction"
+            ],
+            "Effect": "Allow",
+            "Resource": [
+                "${var.alarm_trigger_lambda_arn}"
+            ]
+        }
+    ]
+}
+EOF
+    tags = local.tags
+}
+
+resource "aws_iam_role_policy_attachment" "scheduler-lambda-policy-attachment" {
+    role = aws_iam_role.throwtrash-alarm-lambda-role.name
+    policy_arn = aws_iam_policy.throwtrash-alarm-scheduler-lambda-policy.arn
+}

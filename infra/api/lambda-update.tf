@@ -1,17 +1,17 @@
-data "archive_file" "delete-function-zip" {
+data "archive_file" "update-function-zip" {
   type        = "zip"
   source_dir  = "${path.root}/../app/dist"
-  output_path = "${path.root}/app-delete.zip"
-  excludes = ["api/create","api/update","layer"]
+  output_path = "${path.module}/app-update.zip"
+  excludes = ["api/create","api/delete","layer"]
 }
 
-resource "aws_lambda_function" "throwtrash-alarm-delete-lambda" {
-    function_name = "throwtrash-alarm-delete"
+resource "aws_lambda_function" "throwtrash-alarm-update-lambda" {
+    function_name = "throwtrash-alarm-update"
     role          = aws_iam_role.throwtrash-alarm-lambda-role.arn
-    handler       = "api/delete/controller.handler"
+    handler       = "api/update/controller.handler"
 
-    filename      = data.archive_file.delete-function-zip.output_path
-    source_code_hash = data.archive_file.delete-function-zip.output_base64sha256
+    filename      = data.archive_file.update-function-zip.output_path
+    source_code_hash = data.archive_file.update-function-zip.output_base64sha256
 
     runtime = "nodejs20.x"
 
@@ -31,9 +31,9 @@ resource "aws_lambda_function" "throwtrash-alarm-delete-lambda" {
     tags = local.tags
 }
 
-resource "aws_lambda_permission" "throwtrash-delete-permission-apigw" {
+resource "aws_lambda_permission" "throwtrash-update-permission-apigw" {
     action        = "lambda:InvokeFunction"
-    function_name = aws_lambda_function.throwtrash-alarm-delete-lambda.function_name
+    function_name = aws_lambda_function.throwtrash-alarm-update-lambda.function_name
     principal     = "apigateway.amazonaws.com"
     source_arn   = "${aws_api_gateway_rest_api.api.execution_arn}/*"
 }

@@ -1,7 +1,7 @@
 data "archive_file" "layer_zip" {
   type        = "zip"
   source_dir  = "${path.root}/../app/dist/layer"
-  output_path = "${path.root}/layer.zip"
+  output_path = "${path.module}/layer.zip"
 }
 
 resource "aws_lambda_layer_version" "layer" {

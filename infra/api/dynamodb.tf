@@ -18,3 +18,7 @@ resource "aws_dynamodb_table" "throwtrash-alarm-table" {
   }
   tags = local.tags
 }
+
+output "alarm_table_arn" {
+  value = aws_dynamodb_table.throwtrash-alarm-table.arn
+}

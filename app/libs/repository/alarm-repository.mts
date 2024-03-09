@@ -4,14 +4,16 @@ import { Alarm } from '../domain/alarm.mjs';
 import { Device } from '../domain/device.mjs';
 import { User } from '../domain/user.mjs';
 export class AlarmRepository implements AlarmRepositoryInterface{
-  db: DynamoDBClient;
-  constructor(config: DynamoDBClientConfig) {
+  private db: DynamoDBClient;
+  private table_name: string;
+  constructor(config: DynamoDBClientConfig, table_name: string = 'throwtrash-alarm') {
     this.db = new DynamoDBClient(config);
+    this.table_name = table_name;
   }
   async findByDeviceToken(deviceToken: string): Promise<Alarm | null> {
     try {
       const result = await this.db.send(new GetItemCommand({
-        TableName: 'throwtrash-alarm',
+        TableName: this.table_name,
         Key: {
           "deviceToken": {
             S: deviceToken
@@ -31,7 +33,7 @@ export class AlarmRepository implements AlarmRepositoryInterface{
   async create(alarm: Alarm): Promise<boolean> {
     try {
       const result = await this.db.send(new PutItemCommand({
-        TableName: 'throwtrash-alarm',
+        TableName: this.table_name,
         Item: {
           deviceToken: {
             S: alarm.getDevice().getToken()
@@ -57,7 +59,7 @@ export class AlarmRepository implements AlarmRepositoryInterface{
   async update(alarm: Alarm): Promise<boolean> {
     try {
       const result = await this.db.send(new UpdateItemCommand({
-        TableName: 'throwtrash-alarm',
+        TableName: this.table_name,
         Key: {
           deviceToken: {
             S: alarm.getDevice().getToken()
@@ -91,7 +93,7 @@ export class AlarmRepository implements AlarmRepositoryInterface{
   async delete(alarm: Alarm): Promise<boolean> {
     try {
       await this.db.send(new DeleteItemCommand({
-        TableName: 'throwtrash-alarm',
+        TableName: this.table_name,
         Key: {
           deviceToken: {
             S: alarm.getDevice().getToken()

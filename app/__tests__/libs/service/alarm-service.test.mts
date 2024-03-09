@@ -1,7 +1,6 @@
 import { Alarm } from "../../../libs/domain/alarm.mjs";
 import { Device } from "../../../libs/domain/device.mjs";
 import { User } from "../../../libs/domain/user.mjs";
-import { AlarmRepository } from "../../../libs/repository/alarm-repository.mjs";
 import { AlarmRepositoryInterface } from "../../../libs/service/alarm-repository-interface.mjs";
 import { DeleteError, RegisterError, UpdateError, deleteAlarm, registerAlarm, updateAlarm } from "../../../libs/service/alarm-service.mjs";
 import { AlarmTriggerConnectorInterface } from "../../../libs/service/alarm-trigger-connector-interface.mjs";

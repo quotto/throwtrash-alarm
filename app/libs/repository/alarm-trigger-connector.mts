@@ -1,10 +1,15 @@
 import { AlarmTriggerConnectorInterface } from "../service/alarm-trigger-connector-interface.mjs";
-import { Scheduler,ResourceNotFoundException, CreateScheduleCommand, SchedulerClient, FlexibleTimeWindowMode, SchedulerClientConfig, GetScheduleCommand } from "@aws-sdk/client-scheduler"
+import { ResourceNotFoundException, CreateScheduleCommand, SchedulerClient, FlexibleTimeWindowMode, SchedulerClientConfig, GetScheduleCommand } from "@aws-sdk/client-scheduler"
 
 export class AlarmTriggerConnector implements AlarmTriggerConnectorInterface {
     private scheduler: SchedulerClient;
-    constructor(config: SchedulerClientConfig) {
+    private group_name: string;
+    constructor(config: SchedulerClientConfig,group_name: string = "throwtrash-alarm") {
+        if(group_name === "") {
+            throw new Error("EventBridgeSchdulerのグループ名が指定されていません")
+        }
         this.scheduler = new SchedulerClient(config);
+        this.group_name = group_name;
     }
     async create(time: string): Promise<boolean> {
         const event_bridge_scheduler_name = `throwtrash-alarm-${time}`;
@@ -16,6 +21,7 @@ export class AlarmTriggerConnector implements AlarmTriggerConnectorInterface {
                 Name: event_bridge_scheduler_name,
                 ScheduleExpression: `cron(0 ${time} * * ? *)`,
                 ScheduleExpressionTimezone: "Asia/Tokyo",
+                GroupName: this.group_name,
                 Target: {
                     Arn: process.env.ALARM_TRIGGER_LAMBDA_ARN!,
                     RoleArn: process.env.ALARM_TRIGGER_LAMBDA_ROLE_ARN!

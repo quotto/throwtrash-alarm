@@ -1,3 +1,4 @@
+import { AlarmTime } from "../domain/alarm.mjs";
 import { AlarmTriggerConnectorInterface } from "../service/alarm-trigger-connector-interface.mjs";
 import { ResourceNotFoundException, CreateScheduleCommand, SchedulerClient, FlexibleTimeWindowMode, SchedulerClientConfig, GetScheduleCommand } from "@aws-sdk/client-scheduler"
 
@@ -6,7 +7,7 @@ export class AlarmTriggerConnector implements AlarmTriggerConnectorInterface {
     private group_name: string;
     private alarm_trigger_function_arn: string;
     private alarm_trigger_function_role_arn: string;
-    constructor(config: SchedulerClientConfig,group_name: string = "throwtrash-alarm", trigger_function_arn: string, trigger_function_role_arn: string) {
+    constructor(config: SchedulerClientConfig,group_name: string, trigger_function_arn: string, trigger_function_role_arn: string) {
         if(group_name === "") {
             throw new Error("EventBridgeSchdulerのグループ名が指定されていません")
         }
@@ -21,15 +22,15 @@ export class AlarmTriggerConnector implements AlarmTriggerConnectorInterface {
         this.alarm_trigger_function_arn = trigger_function_arn;
         this.alarm_trigger_function_role_arn = trigger_function_role_arn;
     }
-    async create(time: string): Promise<boolean> {
-        const event_bridge_scheduler_name = `throwtrash-alarm-${time}`;
+    async create(alarmTime: AlarmTime): Promise<boolean> {
+        const event_bridge_scheduler_name = `throwtrash-alarm-${alarmTime.formatTimeToHHMM()}`;
         try {
             const result = await this.scheduler.send(new CreateScheduleCommand({
                 FlexibleTimeWindow: {
                     Mode: FlexibleTimeWindowMode.OFF
                 },
                 Name: event_bridge_scheduler_name,
-                ScheduleExpression: `cron(0 ${time} * * ? *)`,
+                ScheduleExpression: `cron(${alarmTime.getMinute()} ${alarmTime.getHour()} * * ? *)`,
                 ScheduleExpressionTimezone: "Asia/Tokyo",
                 GroupName: this.group_name,
                 Target: {
@@ -48,12 +49,13 @@ export class AlarmTriggerConnector implements AlarmTriggerConnectorInterface {
         }
 
     }
-    async findByTime(time: string): Promise<string | null> {
-        const event_bridge_scheduler_name = `throwtrash-alarm-${time}`;
+    async findByTime(alarmTime: AlarmTime): Promise<string | null> {
+        const event_bridge_scheduler_name = `throwtrash-alarm-${alarmTime.formatTimeToHHMM()}`;
         // 名前が一致するEventBridgeSchdulerがあるかを確認
         try {
             const result = await this.scheduler.send(new GetScheduleCommand({
-                Name: event_bridge_scheduler_name
+                Name: event_bridge_scheduler_name,
+                GroupName: this.group_name
             }));
             return result.Name!;
         } catch (e: any) {

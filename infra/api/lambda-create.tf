@@ -29,9 +29,9 @@ resource "aws_lambda_function" "throwtrash-alarm-create-lambda" {
     environment {
         variables = {
             ALARM_TABLE_NAME = aws_dynamodb_table.throwtrash-alarm-table.name,
-            EVENT_BRIDGE_SCHEDULER_GROUP_NNAME = aws_scheduler_schedule_group.throwtrash-alarm-schedule-group.name,
+            EVENT_BRIDGE_SCHEDULER_GROUP_NAME = aws_scheduler_schedule_group.throwtrash-alarm-schedule-group.name,
             ALARM_TRIGGER_FUNCTION_ARN = var.alarm_trigger_lambda_arn
-						ALARM_TRIGGER_FUNCTION_ROLE_ARN = aws_iam_role.throwtrash-alarm-scheduler-lambda-role.arn
+						ALARM_TRIGGER_FUNCTION_ROLE_ARN = aws_iam_role.throwtrash-alarm-scheduler-role.arn
         }
     }
 

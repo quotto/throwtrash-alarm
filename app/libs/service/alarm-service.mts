@@ -1,4 +1,4 @@
-import { Alarm } from "../domain/alarm.mjs";
+import { Alarm, AlarmTime } from "../domain/alarm.mjs";
 import { Device } from "../domain/device.mjs";
 import { User } from "../domain/user.mjs";
 import { AlarmRepositoryInterface } from "./alarm-repository-interface.mjs";
@@ -25,10 +25,10 @@ export class DeleteError extends Error {
     }
 }
 
-export const registerAlarm = async (alarmRepository: AlarmRepositoryInterface, alarmTriggerConnector: AlarmTriggerConnectorInterface,deviceToken: string, time: string, userId: string, platform: string) => {
-    const newAlarm = new Alarm(new Device(deviceToken, platform), time,new User(userId))
-    if(await alarmTriggerConnector.findByTime(time) === null) {
-        if(!await alarmTriggerConnector.create(time)) {
+export const registerAlarm = async (alarmRepository: AlarmRepositoryInterface, alarmTriggerConnector: AlarmTriggerConnectorInterface,deviceToken: string, alarmTime: AlarmTime, userId: string, platform: string) => {
+    const newAlarm = new Alarm(new Device(deviceToken, platform), alarmTime,new User(userId))
+    if(await alarmTriggerConnector.findByTime(newAlarm.getAlarmTime()) === null) {
+        if(!await alarmTriggerConnector.create(newAlarm.getAlarmTime())) {
             throw new RegisterError("アラームの作成に失敗しました");
         }
     }
@@ -37,15 +37,15 @@ export const registerAlarm = async (alarmRepository: AlarmRepositoryInterface, a
     }
 }
 
-export const updateAlarm = async (alarmRepository: AlarmRepositoryInterface, alarmTriggerConnector: AlarmTriggerConnectorInterface,deviceToken: string, time: string) => {
+export const updateAlarm = async (alarmRepository: AlarmRepositoryInterface, alarmTriggerConnector: AlarmTriggerConnectorInterface,deviceToken: string, alarmTime: AlarmTime) => {
     const alarm = await alarmRepository.findByDeviceToken(deviceToken);
     if(alarm) {
-        if(await alarmTriggerConnector.findByTime(time) === null) {
-            if(!await alarmTriggerConnector.create(time)) {
+        const updatedAlarm = alarm.updateTime(alarmTime);
+        if(await alarmTriggerConnector.findByTime(updatedAlarm.getAlarmTime()) === null) {
+            if(!await alarmTriggerConnector.create(updatedAlarm.getAlarmTime())) {
                 throw new UpdateError("アラームトリガーの作成に失敗しました");
             }
         }
-        const updatedAlarm = alarm.updateTime(time);
         if(!await alarmRepository.update(updatedAlarm)) {
             throw new UpdateError("アラームの更新に失敗しました");
         }

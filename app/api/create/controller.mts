@@ -6,7 +6,17 @@ import { AlarmTriggerConnector } from '../../libs/repository/alarm-trigger-conne
 import { DynamoDBClientConfig } from '@aws-sdk/client-dynamodb';
 import { SchedulerClientConfig } from '@aws-sdk/client-scheduler';
 import { ArgumentError } from '../../libs/domain/argument-error.mjs';
+import { AlarmTime } from '../../libs/domain/alarm.mjs';
 
+type RequestBody= {
+    device_token: string;
+    alarm_time: {
+        hour: number;
+        minute: number;
+    };
+    user_id: string;
+    platform: string;
+}
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayEvent, _context: Context) => {
     try {
         const dynamoDBConfig: DynamoDBClientConfig = {
@@ -20,9 +30,16 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayEvent, _c
         const alarmTriggerConnector = new AlarmTriggerConnector({}, process.env.EVENT_BRIDGE_SCHEDULER_GROUP_NAME!, process.env.ALARM_TRIGGER_FUNCTION_ARN!, process.env.ALARM_TRIGGER_FUNCTION_ROLE_ARN!);
 
         const params = event.body ? JSON.parse(event.body) : {};
-        const { device_token, alarm_time, user_id, platform } = params;
+        const { device_token, alarm_time,  user_id, platform }: RequestBody = params;
 
-        await registerAlarm(alarmRepository, alarmTriggerConnector, device_token, alarm_time, user_id, platform);
+        await registerAlarm(
+            alarmRepository, 
+            alarmTriggerConnector, 
+            device_token, 
+            new AlarmTime(alarm_time), 
+            user_id, 
+            platform
+        );
         return {
             statusCode: 200,
             body: JSON.stringify({

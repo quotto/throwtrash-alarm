@@ -1,4 +1,6 @@
+import { AlarmTime } from "../domain/alarm.mjs";
+
 export interface AlarmTriggerConnectorInterface {
-    create(time: string): Promise<boolean>;
-    findByTime(time: string): Promise<string | null>;
+    create(alarm_time: AlarmTime): Promise<boolean>;
+    findByTime(alarm_time: AlarmTime): Promise<string | null>;
 }

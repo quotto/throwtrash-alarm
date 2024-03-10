@@ -33,11 +33,11 @@ resource "aws_iam_policy" "throwtrash-alarm-lambda-policy" {
         {
             "Sid": "SchedulerPolicy",
             "Action": [
-                "scheduler: *"
+                "scheduler:*"
             ],
             "Effect": "Allow",
             "Resource": [
-                "${aws_scheduler_schedule_group.throwtrash-alarm-schedule-group.arn}/*"
+                "arn:aws:scheduler:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:schedule/${aws_scheduler_schedule_group.throwtrash-alarm-schedule-group.name}/*"
             ]
         },
         {
@@ -49,6 +49,14 @@ resource "aws_iam_policy" "throwtrash-alarm-lambda-policy" {
             ],
             "Resource": [
                 "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/throwtrash-alarm:*"
+            ]
+        },
+        {
+            "Sid": "PassRolePolicy",
+            "Effect": "Allow",
+            "Action": "iam:PassRole",
+            "Resource": [
+                "${aws_iam_role.throwtrash-alarm-scheduler-role.arn}"
             ]
         }
     ]
@@ -63,23 +71,23 @@ resource "aws_iam_role_policy_attachment" "lambda-policy-attachment" {
 }
 
 // EventBridge SchedulerがLambdaを実行するためのポリシーとロールを作成
-data "aws_iam_policy_document" "scheduler_lambda_assume_role_policy" {
+data "aws_iam_policy_document" "scheduler-assume-role-policy" {
     statement {
         actions = ["sts:AssumeRole"]
         principals {
             type        = "Service"
-            identifiers = ["events.amazonaws.com"]
+            identifiers = ["scheduler.amazonaws.com"]
         }
     }
 }
 
-resource "aws_iam_role" "throwtrash-alarm-scheduler-lambda-role" {
+resource "aws_iam_role" "throwtrash-alarm-scheduler-role" {
     name               = "throwtrash-alarm-scheduler-role"
-    assume_role_policy = data.aws_iam_policy_document.lambda_assume_role_policy.json
+    assume_role_policy = data.aws_iam_policy_document.scheduler-assume-role-policy.json
     tags = local.tags
 
 }
-resource "aws_iam_policy" "throwtrash-alarm-scheduler-lambda-policy" {
+resource "aws_iam_policy" "throwtrash-alarm-scheduler-policy" {
     name   = "throwtrash-alarm-scheduler-policy"
     policy = <<EOF
 {
@@ -101,7 +109,7 @@ EOF
     tags = local.tags
 }
 
-resource "aws_iam_role_policy_attachment" "scheduler-lambda-policy-attachment" {
-    role = aws_iam_role.throwtrash-alarm-lambda-role.name
-    policy_arn = aws_iam_policy.throwtrash-alarm-scheduler-lambda-policy.arn
+resource "aws_iam_role_policy_attachment" "scheduler-policy-attachment" {
+    role = aws_iam_role.throwtrash-alarm-scheduler-role.name
+    policy_arn = aws_iam_policy.throwtrash-alarm-scheduler-policy.arn
 }

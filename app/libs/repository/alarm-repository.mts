@@ -1,12 +1,12 @@
 import { DeleteItemCommand, DynamoDBClient,DynamoDBClientConfig,GetItemCommand, PutItemCommand, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
 import { AlarmRepositoryInterface } from '../service/alarm-repository-interface.mjs';
-import { Alarm } from '../domain/alarm.mjs';
+import { Alarm, AlarmTime } from '../domain/alarm.mjs';
 import { Device } from '../domain/device.mjs';
 import { User } from '../domain/user.mjs';
 export class AlarmRepository implements AlarmRepositoryInterface{
   private db: DynamoDBClient;
   private table_name: string;
-  constructor(config: DynamoDBClientConfig, table_name: string = 'throwtrash-alarm') {
+  constructor(config: DynamoDBClientConfig, table_name: string) {
     this.db = new DynamoDBClient(config);
     this.table_name = table_name;
   }
@@ -15,17 +15,22 @@ export class AlarmRepository implements AlarmRepositoryInterface{
       const result = await this.db.send(new GetItemCommand({
         TableName: this.table_name,
         Key: {
-          "deviceToken": {
+          device_token: {
             S: deviceToken
           }
         }
       }));
       if(result.Item) {
-        return new Alarm(new Device(result.Item.deviceToken.S || "", result.Item.platform.S || ""), result.Item.time.S || "", new User(result.Item.userId.S || ""));
+        return new Alarm(
+          new Device(result.Item.deviceToken.S || "", result.Item.platform.S || ""), 
+          new AlarmTime(result.Item.time.S || ""), 
+          new User(result.Item.userId.S || "")
+        );
       }
       return null;
     } catch(e: any) {
-      console.error(e.message || "アラームの取得で予期せぬエラーが発生しました");
+      console.error("アラームデータの取得でエラーが発生しました")
+      console.error(e.message || "不明なエラー");
       return null;
     }
   }
@@ -35,13 +40,13 @@ export class AlarmRepository implements AlarmRepositoryInterface{
       const result = await this.db.send(new PutItemCommand({
         TableName: this.table_name,
         Item: {
-          deviceToken: {
+          device_token: {
             S: alarm.getDevice().getToken()
           },
-          time: {
-            S: alarm.getTime()
+          alarm_time: {
+            S: alarm.getAlarmTime().formatTimeToHHMM()
           },
-          userId: {
+          user_id: {
             S: alarm.getUser().getId()
           },
           platform: {
@@ -51,7 +56,8 @@ export class AlarmRepository implements AlarmRepositoryInterface{
       }));
       return true;
     } catch(e: any) {
-      console.error(e.message || "アラームの作成で予期せぬエラーが発生しました");
+      console.error("アラームのデータ登録に失敗しました");
+      console.error(e.message || "不明なエラー");
       return false;
     }
   }
@@ -61,21 +67,21 @@ export class AlarmRepository implements AlarmRepositoryInterface{
       const result = await this.db.send(new UpdateItemCommand({
         TableName: this.table_name,
         Key: {
-          deviceToken: {
+          device_token: {
             S: alarm.getDevice().getToken()
           }
         },
-        UpdateExpression: "set #time = :time, #userId = :userId, #platform = :platform",
+        UpdateExpression: "set #alarm_time = :alarm_time, #user_id = :user_id, #platform = :platform",
         ExpressionAttributeNames: {
-          "#time": "time",
-          "#userId": "userId",
+          "#alarm_time": "alarm_time",
+          "#user_id": "user_id",
           "#platform": "platform"
         },
         ExpressionAttributeValues: {
-          ":time": {
-            S: alarm.getTime(),
+          ":alarm_time": {
+            S: alarm.getAlarmTime().formatTimeToHHMM(),
           },
-          ":userId": {
+          ":user_id": {
             S: alarm.getUser().getId()
           },
           ":platform": {
@@ -85,7 +91,8 @@ export class AlarmRepository implements AlarmRepositoryInterface{
       }));
       return true;
     } catch(e: any) {
-      console.error(e.message || "アラームの更新で予期せぬエラーが発生しました");
+      console.error("アラームデータの更新でエラーが発生しました")
+      console.error(e.message || "不明なエラー");
       return false;
     }
   }
@@ -95,14 +102,15 @@ export class AlarmRepository implements AlarmRepositoryInterface{
       await this.db.send(new DeleteItemCommand({
         TableName: this.table_name,
         Key: {
-          deviceToken: {
+          device_token: {
             S: alarm.getDevice().getToken()
           }
         }
       }));
       return true;
     } catch(e: any) {
-      console.error(e.message || "アラームの削除で予期せぬエラーが発生しました");
+      console.error("アラームデータの削除でエラーが発生しました");
+      console.error(e.message || "不明なエラー");
       return false;
     }
   }

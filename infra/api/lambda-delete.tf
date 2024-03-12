@@ -24,7 +24,7 @@ resource "aws_lambda_function" "throwtrash-alarm-delete-lambda" {
 
     environment {
         variables = {
-            TABLE_NAME = "Alarm"
+            ALARM_TABLE_NAME = aws_dynamodb_table.throwtrash-alarm-table.name,
         }
     }
 
@@ -34,6 +34,7 @@ resource "aws_lambda_function" "throwtrash-alarm-delete-lambda" {
 resource "aws_lambda_permission" "throwtrash-delete-permission-apigw" {
     action        = "lambda:InvokeFunction"
     function_name = aws_lambda_function.throwtrash-alarm-delete-lambda.function_name
+    qualifier = "dev"
     principal     = "apigateway.amazonaws.com"
-    source_arn   = "${aws_api_gateway_rest_api.api.execution_arn}/*"
+    source_arn   = "${aws_api_gateway_rest_api.api.execution_arn}/*/${aws_api_gateway_method.api-method-delete.http_method}/${aws_api_gateway_resource.api-resource-delete.path_part}"
 }

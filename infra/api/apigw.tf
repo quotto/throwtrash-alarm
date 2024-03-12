@@ -93,7 +93,8 @@ resource "aws_api_gateway_integration" "api-integration-delete" {
     rest_api_id = aws_api_gateway_rest_api.api.id
     resource_id = aws_api_gateway_resource.api-resource-delete.id
     http_method = aws_api_gateway_method.api-method-delete.http_method
-    integration_http_method = aws_api_gateway_method.api-method-delete.http_method
+    // AWS Lambdaの呼び出しはPOSTのみが許可されるため、API側のメソッドに関わらずPOSTを指定する
+    integration_http_method = "POST"
     type = "AWS_PROXY"
     uri = "arn:aws:apigateway:${data.aws_region.current.name}:lambda:path/2015-03-31/functions/${aws_lambda_function.throwtrash-alarm-delete-lambda.arn}:$${stageVariables.stageName}/invocations"
     passthrough_behavior = "WHEN_NO_TEMPLATES"
@@ -103,7 +104,8 @@ resource "aws_api_gateway_integration" "api-integration-update" {
     rest_api_id = aws_api_gateway_rest_api.api.id
     resource_id = aws_api_gateway_resource.api-resource-update.id
     http_method = aws_api_gateway_method.api-method-put.http_method
-    integration_http_method = aws_api_gateway_method.api-method-put.http_method
+    // AWS Lambdaの呼び出しはPOSTのみが許可されるため、API側のメソッドに関わらずPOSTを指定する
+    integration_http_method = "POST"
     type = "AWS_PROXY"
     uri = "arn:aws:apigateway:${data.aws_region.current.name}:lambda:path/2015-03-31/functions/${aws_lambda_function.throwtrash-alarm-update-lambda.arn}:$${stageVariables.stageName}/invocations"
     passthrough_behavior = "WHEN_NO_TEMPLATES"
@@ -111,10 +113,16 @@ resource "aws_api_gateway_integration" "api-integration-update" {
 
 resource "aws_api_gateway_deployment" "api-deployment-dev" {
     rest_api_id = aws_api_gateway_rest_api.api.id
-    depends_on = [ aws_api_gateway_integration.api-integration-create ]
+    depends_on = [
+        aws_api_gateway_integration.api-integration-create,
+        aws_api_gateway_integration.api-integration-delete,
+        aws_api_gateway_integration.api-integration-update
+    ]
     triggers = {
         redeployment = sha1(jsonencode([
             aws_api_gateway_integration.api-integration-create.id,
+            aws_api_gateway_integration.api-integration-delete.id,
+            aws_api_gateway_integration.api-integration-update.id,
             aws_api_gateway_method.api-method-post.id,
             aws_api_gateway_method.api-method-put.id,
             aws_api_gateway_method.api-method-delete.id,
@@ -125,9 +133,16 @@ resource "aws_api_gateway_deployment" "api-deployment-dev" {
 
 resource "aws_api_gateway_deployment" "api-deployment-prod" {
     rest_api_id = aws_api_gateway_rest_api.api.id
+    depends_on = [
+        aws_api_gateway_integration.api-integration-create,
+        aws_api_gateway_integration.api-integration-delete,
+        aws_api_gateway_integration.api-integration-update
+    ]
     triggers = {
         redeployment = sha1(jsonencode([
             aws_api_gateway_integration.api-integration-create.id,
+            aws_api_gateway_integration.api-integration-delete.id,
+            aws_api_gateway_integration.api-integration-update.id,
             aws_api_gateway_method.api-method-post.id,
             aws_api_gateway_method.api-method-put.id,
             aws_api_gateway_method.api-method-delete.id,

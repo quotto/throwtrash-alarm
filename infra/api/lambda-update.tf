@@ -24,7 +24,10 @@ resource "aws_lambda_function" "throwtrash-alarm-update-lambda" {
 
     environment {
         variables = {
-            TABLE_NAME = "Alarm"
+            ALARM_TABLE_NAME = aws_dynamodb_table.throwtrash-alarm-table.name
+            EVENT_BRIDGE_SCHEDULER_GROUP_NAME = aws_scheduler_schedule_group.throwtrash-alarm-schedule-group.name
+            ALARM_TRIGGER_FUNCTION_ARN = var.alarm_trigger_lambda_arn
+            ALARM_TRIGGER_FUNCTION_ROLE_ARN = aws_iam_role.throwtrash-alarm-scheduler-role.arn
         }
     }
 
@@ -34,6 +37,7 @@ resource "aws_lambda_function" "throwtrash-alarm-update-lambda" {
 resource "aws_lambda_permission" "throwtrash-update-permission-apigw" {
     action        = "lambda:InvokeFunction"
     function_name = aws_lambda_function.throwtrash-alarm-update-lambda.function_name
+    qualifier = "dev"
     principal     = "apigateway.amazonaws.com"
-    source_arn   = "${aws_api_gateway_rest_api.api.execution_arn}/*"
+    source_arn   = "${aws_api_gateway_rest_api.api.execution_arn}/*/${aws_api_gateway_method.api-method-put.http_method}/${aws_api_gateway_resource.api-resource-update.path_part}"
 }

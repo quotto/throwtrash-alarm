@@ -25,28 +25,31 @@ export class DeleteError extends Error {
     }
 }
 
-export const registerAlarm = async (alarmRepository: AlarmRepositoryInterface, alarmTriggerConnector: AlarmTriggerConnectorInterface,deviceToken: string, alarmTime: AlarmTime, userId: string, platform: string) => {
-    const newAlarm = new Alarm(new Device(deviceToken, platform), alarmTime,new User(userId))
-    if(await alarmTriggerConnector.findByTime(newAlarm.getAlarmTime()) === null) {
-        if(!await alarmTriggerConnector.create(newAlarm.getAlarmTime())) {
+export const registerAlarm = async (alarm_repository: AlarmRepositoryInterface, alarm_trigger_connector: AlarmTriggerConnectorInterface,deviceToken: string, alarm_time: AlarmTime, userId: string, platform: string) => {
+    const new_alarm = new Alarm(new Device(deviceToken, platform), alarm_time,new User(userId))
+    if(await alarm_trigger_connector.findByTime(new_alarm.getAlarmTime()) === null) {
+        if(!await alarm_trigger_connector.create(new_alarm.getAlarmTime())) {
             throw new RegisterError("アラームの作成に失敗しました");
         }
     }
-    if(!await alarmRepository.create(newAlarm)) {
+    if(!await alarm_repository.create(new_alarm)) {
         throw new RegisterError("アラームの登録に失敗しました");
     }
 }
 
-export const updateAlarm = async (alarmRepository: AlarmRepositoryInterface, alarmTriggerConnector: AlarmTriggerConnectorInterface,deviceToken: string, alarmTime: AlarmTime) => {
-    const alarm = await alarmRepository.findByDeviceToken(deviceToken);
+export const updateAlarm = async (alarm_repository: AlarmRepositoryInterface, alarm_trigger_connector: AlarmTriggerConnectorInterface,device_token: string, alarm_time: AlarmTime) => {
+    if(device_token === "") {
+        throw new UpdateError("デバイストークンが指定されていません");
+    }
+    const alarm = await alarm_repository.findByDeviceToken(device_token);
     if(alarm) {
-        const updatedAlarm = alarm.updateTime(alarmTime);
-        if(await alarmTriggerConnector.findByTime(updatedAlarm.getAlarmTime()) === null) {
-            if(!await alarmTriggerConnector.create(updatedAlarm.getAlarmTime())) {
+        const updatedAlarm = alarm.updateTime(alarm_time);
+        if(await alarm_trigger_connector.findByTime(updatedAlarm.getAlarmTime()) === null) {
+            if(!await alarm_trigger_connector.create(updatedAlarm.getAlarmTime())) {
                 throw new UpdateError("アラームトリガーの作成に失敗しました");
             }
         }
-        if(!await alarmRepository.update(updatedAlarm)) {
+        if(!await alarm_repository.update(updatedAlarm)) {
             throw new UpdateError("アラームの更新に失敗しました");
         }
     } else {
@@ -54,10 +57,10 @@ export const updateAlarm = async (alarmRepository: AlarmRepositoryInterface, ala
     }
 }
 
-export const deleteAlarm = async (alarmRepository: AlarmRepositoryInterface, deviceToken: string) => {
-    const alarm = await alarmRepository.findByDeviceToken(deviceToken);
+export const deleteAlarm = async (alarm_repository: AlarmRepositoryInterface, device_token: string) => {
+    const alarm = await alarm_repository.findByDeviceToken(device_token);
     if(alarm != null) {
-        if(!await alarmRepository.delete(alarm)) {
+        if(!await alarm_repository.delete(alarm)) {
             throw new DeleteError("アラームの削除に失敗しました");
         }
     } else {

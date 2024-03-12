@@ -22,15 +22,15 @@ export class AlarmTriggerConnector implements AlarmTriggerConnectorInterface {
         this.alarm_trigger_function_arn = trigger_function_arn;
         this.alarm_trigger_function_role_arn = trigger_function_role_arn;
     }
-    async create(alarmTime: AlarmTime): Promise<boolean> {
-        const event_bridge_scheduler_name = `throwtrash-alarm-${alarmTime.formatTimeToHHMM()}`;
+    async create(alarm_time: AlarmTime): Promise<boolean> {
+        const event_bridge_scheduler_name = `throwtrash-alarm-${alarm_time.formatTimeToHHMM()}`;
         try {
             const result = await this.scheduler.send(new CreateScheduleCommand({
                 FlexibleTimeWindow: {
                     Mode: FlexibleTimeWindowMode.OFF
                 },
                 Name: event_bridge_scheduler_name,
-                ScheduleExpression: `cron(${alarmTime.getMinute()} ${alarmTime.getHour()} * * ? *)`,
+                ScheduleExpression: `cron(${alarm_time.getMinute()} ${alarm_time.getHour()} * * ? *)`,
                 ScheduleExpressionTimezone: "Asia/Tokyo",
                 GroupName: this.group_name,
                 Target: {
@@ -49,8 +49,8 @@ export class AlarmTriggerConnector implements AlarmTriggerConnectorInterface {
         }
 
     }
-    async findByTime(alarmTime: AlarmTime): Promise<string | null> {
-        const event_bridge_scheduler_name = `throwtrash-alarm-${alarmTime.formatTimeToHHMM()}`;
+    async findByTime(alarm_time: AlarmTime): Promise<string | null> {
+        const event_bridge_scheduler_name = `throwtrash-alarm-${alarm_time.formatTimeToHHMM()}`;
         // 名前が一致するEventBridgeSchdulerがあるかを確認
         try {
             const result = await this.scheduler.send(new GetScheduleCommand({

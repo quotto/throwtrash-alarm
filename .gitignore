@@ -1,4 +1,4 @@
-node_modules
-app/dist
+**/node_modules
+**/__dist__
 infra/**/*.zip
 .terraform

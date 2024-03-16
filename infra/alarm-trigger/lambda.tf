@@ -1,6 +1,6 @@
 data "archive_file" "trigger-function-zip" {
     type        = "zip"
-    source_dir  = "${path.root}/../alarm-trigger/dist"
+    source_dir  = "${path.root}/../app/packages/trigger"
     output_path = "${path.module}/alarm-trigger.zip"
 }
 resource "aws_lambda_function" "throwtrash-alarm-trigger-lambda" {

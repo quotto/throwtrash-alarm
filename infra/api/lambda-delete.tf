@@ -1,8 +1,7 @@
 data "archive_file" "delete-function-zip" {
   type        = "zip"
-  source_dir  = "${path.root}/../app/dist"
+  source_dir  = "${path.root}/../app/packages/api/delete/dist"
   output_path = "${path.module}/app-delete.zip"
-  excludes = ["api/create","api/update","layer"]
 }
 
 resource "aws_lambda_function" "throwtrash-alarm-delete-lambda" {

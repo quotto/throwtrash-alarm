@@ -24,5 +24,6 @@
     "./domain/*": "./src/domain/*",
     "./repository/*": "./src/repository/*",
     "./service/*": "./src/service/*"
-  }
+  },
+  "files": ["dist"]
 }

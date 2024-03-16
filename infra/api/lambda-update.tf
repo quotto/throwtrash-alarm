@@ -1,8 +1,7 @@
 data "archive_file" "update-function-zip" {
   type        = "zip"
-  source_dir  = "${path.root}/../app/dist"
+  source_dir  = "${path.root}/../app/packages/api/update/dist"
   output_path = "${path.module}/app-update.zip"
-  excludes = ["api/create","api/delete","layer"]
 }
 
 resource "aws_lambda_function" "throwtrash-alarm-update-lambda" {

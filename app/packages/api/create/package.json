@@ -14,9 +14,6 @@
     "@types/source-map-support": "^0.5.10"
   },
   "dependencies": {
-    "@function/delete": "^1.0.0",
-    "@function/trigger": "^1.0.0",
-    "@function/update": "^1.0.0",
     "@shared/core": "^1.0.0",
     "source-map-support": "^0.5.21"
   },

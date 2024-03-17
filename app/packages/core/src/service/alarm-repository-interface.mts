@@ -1,8 +1,8 @@
-import { Alarm } from "../domain/alarm.mjs";
+import { Alarm, AlarmTime } from "../domain/alarm.mjs";
 
 export interface AlarmRepositoryInterface {
-    create: (alarm: Alarm) => Promise<boolean>;
-    update: (alarm: Alarm) => Promise<boolean>;
+    save: (alarm: Alarm) => Promise<boolean>;
     delete: (alarm: Alarm) => Promise<boolean>;
     findByDeviceToken: (deviceToken: string) => Promise<Alarm | null>;
+    findByAlarmTime: (alarmTime: AlarmTime) => Promise<Alarm[]>;
 }

@@ -32,7 +32,7 @@ export const registerAlarm = async (alarm_repository: AlarmRepositoryInterface, 
             throw new RegisterError("アラームの作成に失敗しました");
         }
     }
-    if(!await alarm_repository.create(new_alarm)) {
+    if(!await alarm_repository.save(new_alarm)) {
         throw new RegisterError("アラームの登録に失敗しました");
     }
 }
@@ -49,7 +49,7 @@ export const updateAlarm = async (alarm_repository: AlarmRepositoryInterface, al
                 throw new UpdateError("アラームトリガーの作成に失敗しました");
             }
         }
-        if(!await alarm_repository.update(updatedAlarm)) {
+        if(!await alarm_repository.save(updatedAlarm)) {
             throw new UpdateError("アラームの更新に失敗しました");
         }
     } else {

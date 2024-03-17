@@ -20,10 +20,10 @@
   },
   "description": "",
   "type": "module",
+  "files": ["dist"],
   "exports": {
-    "./domain/*": "./src/domain/*",
-    "./repository/*": "./src/repository/*",
-    "./service/*": "./src/service/*"
-  },
-  "files": ["dist"]
+    "./domain/*": "./dist/domain/*",
+    "./repository/*": "./dist/repository/*",
+    "./service/*": "./dist/service/*"
+  }
 }

@@ -1,8 +1,8 @@
 import { AlarmTime } from "../domain/alarm.mjs";
-import { AlarmTriggerConnectorInterface } from "../service/alarm-trigger-connector-interface.mjs";
+import { AlarmScheduler } from "../service/alarm-scheduler.mjs";
 import { ResourceNotFoundException, CreateScheduleCommand, SchedulerClient, FlexibleTimeWindowMode, SchedulerClientConfig, GetScheduleCommand } from "@aws-sdk/client-scheduler"
 
-export class AlarmTriggerConnector implements AlarmTriggerConnectorInterface {
+export class EventBridgeAlarmScheduler implements AlarmScheduler {
     private scheduler: SchedulerClient;
     private group_name: string;
     private alarm_trigger_function_arn: string;

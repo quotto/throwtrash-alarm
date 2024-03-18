@@ -1,8 +1,8 @@
 import { Alarm, AlarmTime } from "../domain/alarm.mjs";
 import { Device } from "../domain/device.mjs";
 import { User } from "../domain/user.mjs";
-import { AlarmRepositoryInterface } from "./alarm-repository-interface.mjs";
-import { AlarmTriggerConnectorInterface } from "./alarm-trigger-connector-interface.mjs";
+import { AlarmRepository } from "./alarm-repository.mjs";
+import { AlarmScheduler } from "./alarm-scheduler.mjs";
 
 export class RegisterError extends Error {
     constructor(message: string) {
@@ -25,7 +25,7 @@ export class DeleteError extends Error {
     }
 }
 
-export const registerAlarm = async (alarm_repository: AlarmRepositoryInterface, alarm_trigger_connector: AlarmTriggerConnectorInterface,deviceToken: string, alarm_time: AlarmTime, userId: string, platform: string) => {
+export const registerAlarm = async (alarm_repository: AlarmRepository, alarm_trigger_connector: AlarmScheduler,deviceToken: string, alarm_time: AlarmTime, userId: string, platform: string) => {
     const new_alarm = new Alarm(new Device(deviceToken, platform), alarm_time,new User(userId))
     if(await alarm_trigger_connector.findByTime(new_alarm.getAlarmTime()) === null) {
         if(!await alarm_trigger_connector.create(new_alarm.getAlarmTime())) {
@@ -37,7 +37,7 @@ export const registerAlarm = async (alarm_repository: AlarmRepositoryInterface, 
     }
 }
 
-export const updateAlarm = async (alarm_repository: AlarmRepositoryInterface, alarm_trigger_connector: AlarmTriggerConnectorInterface,device_token: string, alarm_time: AlarmTime) => {
+export const updateAlarm = async (alarm_repository: AlarmRepository, alarm_trigger_connector: AlarmScheduler,device_token: string, alarm_time: AlarmTime) => {
     if(device_token === "") {
         throw new UpdateError("デバイストークンが指定されていません");
     }
@@ -57,7 +57,7 @@ export const updateAlarm = async (alarm_repository: AlarmRepositoryInterface, al
     }
 }
 
-export const deleteAlarm = async (alarm_repository: AlarmRepositoryInterface, device_token: string) => {
+export const deleteAlarm = async (alarm_repository: AlarmRepository, device_token: string) => {
     const alarm = await alarm_repository.findByDeviceToken(device_token);
     if(alarm != null) {
         if(!await alarm_repository.delete(alarm)) {

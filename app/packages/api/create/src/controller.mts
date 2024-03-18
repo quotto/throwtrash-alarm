@@ -1,8 +1,8 @@
 import 'source-map-support/register.js';
 import { APIGatewayEvent,  APIGatewayProxyHandler, Context } from 'aws-lambda';
 import { registerAlarm } from '@shared/core/service/alarm-service.mjs';
-import { AlarmRepository } from '@shared/core/repository/alarm-repository.mjs';
-import { AlarmTriggerConnector } from '@shared/core/repository/alarm-trigger-connector.mjs';
+import { DynamoDBAlarmRepository } from '@shared/core/repository/dynamodb-alarm-repository.mjs';
+import { EventBridgeAlarmScheduler } from '@shared/core/repository/eventbridge-alarm-scheduler.mjs';
 import { DynamoDBClientConfig } from '@aws-sdk/client-dynamodb';
 import { SchedulerClientConfig } from '@aws-sdk/client-scheduler';
 import { ArgumentError } from '@shared/core/domain/argument-error.mjs';
@@ -22,12 +22,12 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayEvent, _c
         const dynamoDBConfig: DynamoDBClientConfig = {
             region: 'ap-northeast-1'
         };
-        const alarmRepository = new AlarmRepository(dynamoDBConfig, process.env.ALARM_TABLE_NAME!);
+        const alarmRepository = new DynamoDBAlarmRepository(dynamoDBConfig, process.env.ALARM_TABLE_NAME!);
 
         const eventBridgeSchedulerClientConfig: SchedulerClientConfig = {
             region: 'ap-northeast-1',
         };
-        const alarmTriggerConnector = new AlarmTriggerConnector({}, process.env.EVENT_BRIDGE_SCHEDULER_GROUP_NAME!, process.env.ALARM_TRIGGER_FUNCTION_ARN!, process.env.ALARM_TRIGGER_FUNCTION_ROLE_ARN!);
+        const alarmTriggerConnector = new EventBridgeAlarmScheduler({}, process.env.EVENT_BRIDGE_SCHEDULER_GROUP_NAME!, process.env.ALARM_TRIGGER_FUNCTION_ARN!, process.env.ALARM_TRIGGER_FUNCTION_ROLE_ARN!);
 
         const params = event.body ? JSON.parse(event.body) : {};
         const { device_token, alarm_time,  user_id, platform }: RequestBody = params;

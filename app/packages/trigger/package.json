@@ -8,7 +8,7 @@
     "@types/source-map-support": "^0.5.10"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "build": "tsc"
   },
   "author": "",
@@ -19,7 +19,7 @@
     "@shared/core": "^1.0.0",
     "firebase-admin": "^12.0.0",
     "source-map-support": "^0.5.21",
-    "trash-common": "github:quotto/throwtrash-common-module#v3.0"
+    "trash-common": "github:quotto/throwtrash-common-module#v3.0.1"
   },
   "type": "module"
 }

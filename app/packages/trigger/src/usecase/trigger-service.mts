@@ -1,11 +1,12 @@
 import { AlarmTime } from "@shared/core/domain/alarm-time.mjs";
 import { MessageSender } from "./message-sender.mjs";
-import { AlarmRepositoryInterface} from "@shared/core/service/alarm-repository-interface.mjs";
+import { AlarmRepository} from "@shared/core/service/alarm-repository.mjs";
 import { TrashScheduleRepository } from "./trash-schedule-repository.mjs";
 import { Alarm } from "@shared/core/domain/alarm.mjs";
 import { DBAdapter, TextCreator, TrashSchedule, TrashScheduleService } from "trash-common";
 import { DeviceMessage } from "../entity/device-message.mjs";
 
+const MAX_SEND_DEVICES = 500;
 class DBAdapterImple implements DBAdapter {
   getUserIDByAccessToken(access_token: string): Promise<string> {
     throw new Error("Method not implemented.");
@@ -16,26 +17,53 @@ class DBAdapterImple implements DBAdapter {
 }
 const text_creator = new TextCreator("ja-JP");
 const trash_schedule_service = new TrashScheduleService("Asia/Tokyo", text_creator,new DBAdapterImple());
+
 export const sendMessage = async (
   trash_schedule_repository: TrashScheduleRepository,
-  alarm_repository: AlarmRepositoryInterface ,
-  notification_sender: MessageSender,alarm_time: string
+  alarm_repository: AlarmRepository ,
+  notification_sender: MessageSender,alarm_time: AlarmTime
 ) => {
-  const target_devices = await alarm_repository.findByAlarmTime(new AlarmTime(alarm_time));  
+  const target_devices = await alarm_repository.listByAlarmTime(alarm_time);
   if(target_devices.length == 0) {
     console.warn("該当するデバイスはありませんでした");
     return;
   }
-  target_devices.map(async (alarm: Alarm) => {
-    const trash_schedule = await trash_schedule_repository.findTrashScheduleByUserId(alarm.getUser().getId());
-    if(!trash_schedule) {
-      console.warn(`ゴミ捨てスケジュールが見つかりませんでした - ${alarm.getUser().getId()}`);
-      return;
+  const all_send_tasks: Promise<any>[] = [];
+
+  while(target_devices.length > 0) {
+    const send_target_devices = target_devices.splice(0, MAX_SEND_DEVICES);
+
+    const device_messages: DeviceMessage[] = []
+    send_target_devices.forEach(async (alarm: Alarm) => {
+      const trash_schedule = await trash_schedule_repository.findTrashScheduleByUserId(alarm.getUser().getId());
+      if(!trash_schedule) {
+        console.warn(`ゴミ捨てスケジュールが見つかりませんでした - ${alarm.getUser().getId()}`);
+        return;
+      }
+
+      const today = new Date();
+      console.log(today.toISOString())
+      const enable_trashes: string[] = [];
+      trash_schedule.trashData.forEach((trash_data) => {
+        const trash_type = trash_schedule_service.getEnableTrashData(trash_data, today);
+        if(trash_type) {
+          console.log(trash_type)
+          enable_trashes.push(trash_type.name)
+        }
+      });
+      const message = enable_trashes.length > 0 ? enable_trashes.join(",") : "今日出せるゴミはありません";
+
+      device_messages.push(new DeviceMessage(alarm.getDevice(), message));
+    });
+
+    all_send_tasks.push(notification_sender.sendToDevices(device_messages));
+  }
+
+  const result = await Promise.all(all_send_tasks);
+  result.forEach((notification_result, index) => {
+    if(notification_result.status === "FAILURE") {
+      console.error(`メッセージの送信でエラーが発生しました - 対象範囲: ${index * MAX_SEND_DEVICES + 1} - ${index * MAX_SEND_DEVICES + MAX_SEND_DEVICES}`);
+      console.error(notification_result.errorMessages);
     }
-    const message = trash_schedule.trashData.map(async (trash_data) => {
-      const trash_type = await trash_schedule_service.getEnableTrashData(trash_data, new Date())
-      return trash_type ? trash_type.name : null;
-    }).filter((trash_name) => trash_name !== null).join(",") || "今日出せるゴミはありません";
-    return new DeviceMessage(alarm.getDevice(), message);
-  })
+  });
 }

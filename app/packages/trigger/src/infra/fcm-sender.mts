@@ -30,6 +30,7 @@ export class FcmSender implements MessageSender {
         const errorMessages: DeviceMessage[] = [];
         response.responses.forEach((resp, index) => {
           if(!resp.success) {
+            console.error(`メッセージの送信に失敗しました - ${deviceMessages[index].device.getToken()}, メッセージID: ${resp.messageId}`)
             errorMessages.push(deviceMessages[index]);
           }
         });

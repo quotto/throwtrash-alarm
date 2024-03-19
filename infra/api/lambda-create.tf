@@ -1,7 +1,3 @@
-variable "alarm_trigger_lambda_arn" {
-  type        = string
-}
-
 data "archive_file" "create-function-zip" {
   type        = "zip"
   source_dir  = "${path.root}/../app/packages/api/create/dist"
@@ -18,7 +14,7 @@ resource "aws_lambda_function" "throwtrash-alarm-create-lambda" {
 
     runtime = "nodejs20.x"
 
-    layers = [aws_lambda_layer_version.layer.arn]
+    layers = [var.layer_arn]
 
     logging_config {
         log_format = "JSON"

@@ -11,3 +11,7 @@ resource "aws_lambda_layer_version" "layer" {
   filename = data.archive_file.layer_zip.output_path
   source_code_hash = "${data.archive_file.layer_zip.output_base64sha256}"
 }
+
+output layer_arn {
+  value = aws_lambda_layer_version.layer.arn
+}

@@ -22,3 +22,7 @@ resource "aws_dynamodb_table" "throwtrash-alarm-table" {
 output "alarm_table_arn" {
   value = aws_dynamodb_table.throwtrash-alarm-table.arn
 }
+
+output "alarm_table_name" {
+  value = aws_dynamodb_table.throwtrash-alarm-table.name
+}

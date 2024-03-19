@@ -1,10 +1,6 @@
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
-variable "alarm_table_arn" {
-    type        = string
-}
-
 data "aws_iam_policy_document" "lambda_assume_role_policy" {
     statement {
         actions = ["sts:AssumeRole"]
@@ -34,7 +30,8 @@ resource "aws_iam_policy" "throwtrash-alarm-trigger-lambda-policy" {
             ],
             "Effect": "Allow",
             "Resource": [
-                "${var.alarm_table_arn}"
+                "${var.alarm_table_arn}",
+                "${var.trash_schedule_table_arn}"
             ]
         },
         {

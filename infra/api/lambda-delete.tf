@@ -14,7 +14,7 @@ resource "aws_lambda_function" "throwtrash-alarm-delete-lambda" {
 
     runtime = "nodejs20.x"
 
-    layers = [aws_lambda_layer_version.layer.arn]
+    layers = [var.layer_arn]
 
     logging_config {
         log_format = "JSON"

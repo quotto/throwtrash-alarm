@@ -2,3 +2,4 @@
 **/dist
 infra/**/*.zip
 .terraform
+tsconfig.tsbuildinfo

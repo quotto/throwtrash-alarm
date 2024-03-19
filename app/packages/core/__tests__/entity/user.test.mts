@@ -1,6 +1,6 @@
 import { describe, test, expect } from '@jest/globals';
-import { ArgumentError } from "../../src/domain/argument-error.mjs";
-import { User } from "../../src/domain/user.mjs";
+import { ArgumentError } from "../../src/entity/argument-error.mjs";
+import { User } from "../../src/entity/user.mjs";
 
 describe('User', () => {
     test('正常にUserインスタンスが生成される', () => {

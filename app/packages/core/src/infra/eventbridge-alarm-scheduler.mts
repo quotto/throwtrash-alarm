@@ -1,5 +1,5 @@
-import { AlarmTime } from "../domain/alarm.mjs";
-import { AlarmScheduler } from "../service/alarm-scheduler.mjs";
+import { AlarmTime } from "../entity/alarm.mjs";
+import { AlarmScheduler } from "../usecase/alarm-scheduler.mjs";
 import { ResourceNotFoundException, CreateScheduleCommand, SchedulerClient, FlexibleTimeWindowMode, SchedulerClientConfig, GetScheduleCommand } from "@aws-sdk/client-scheduler"
 
 export class EventBridgeAlarmScheduler implements AlarmScheduler {

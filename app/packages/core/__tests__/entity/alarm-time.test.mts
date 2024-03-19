@@ -1,6 +1,6 @@
 import { describe, expect, test } from "@jest/globals";
-import { AlarmTime } from "../../src/domain/alarm.mjs";
-import { ArgumentError } from "../../src/domain/argument-error.mjs";
+import { AlarmTime } from "../../src/entity/alarm.mjs";
+import { ArgumentError } from "../../src/entity/argument-error.mjs";
 
 describe('AlarmTime', () => {
     describe('数値によるインスタンス生成', () => {

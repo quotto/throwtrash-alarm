@@ -2,7 +2,7 @@
   "name": "@function/update",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "index.mjs",
   "devDependencies": {
     "@types/aws-lambda": "^8.10.136",
     "@types/source-map-support": "^0.5.10"

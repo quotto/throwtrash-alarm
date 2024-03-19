@@ -1,6 +1,6 @@
-import { Alarm, AlarmTime } from "../domain/alarm.mjs";
-import { Device } from "../domain/device.mjs";
-import { User } from "../domain/user.mjs";
+import { Alarm, AlarmTime } from "../entity/alarm.mjs";
+import { Device } from "../entity/device.mjs";
+import { User } from "../entity/user.mjs";
 import { AlarmRepository } from "./alarm-repository.mjs";
 import { AlarmScheduler } from "./alarm-scheduler.mjs";
 

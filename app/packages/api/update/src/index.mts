@@ -1,12 +1,12 @@
 import { DynamoDBClientConfig } from '@aws-sdk/client-dynamodb';
 import { APIGatewayEvent, APIGatewayProxyHandler, Context } from 'aws-lambda';
 import 'source-map-support/register.js'
-import { AlarmRepository } from '@shared/core/repository/alarm-repository.mjs';
 import { SchedulerClientConfig } from '@aws-sdk/client-scheduler';
-import { AlarmTriggerConnector } from '@shared/core/repository/alarm-trigger-connector.mjs';
-import { updateAlarm } from '@shared/core/service/alarm-service.mjs';
-import { ArgumentError } from '@shared/core/domain/argument-error.mjs';
-import { AlarmTime } from '@shared/core/domain/alarm-time.mjs';
+import { updateAlarm } from '@shared/core/usecase/alarm-service.mjs';
+import { ArgumentError } from '@shared/core/entity/argument-error.mjs';
+import { AlarmTime } from '@shared/core/entity/alarm-time.mjs';
+import { DynamoDBAlarmRepository } from '@shared/core/infra/dynamodb-alarm-repository.mjs';
+import { EventBridgeAlarmScheduler } from '@shared/core/infra/eventbridge-alarm-scheduler.mjs';
 
 type RequestBody= {
     device_token: string;
@@ -20,12 +20,12 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayEvent, _c
         const dynamodb_config: DynamoDBClientConfig = {
             region: 'ap-northeast-1'
         };
-        const alarm_repository = new AlarmRepository(dynamodb_config, process.env.ALARM_TABLE_NAME!);
+        const alarm_repository = new DynamoDBAlarmRepository(dynamodb_config, process.env.ALARM_TABLE_NAME!);
 
         const event_bridge_scheduler_client_config: SchedulerClientConfig = {
             region: 'ap-northeast-1',
         };
-        const alarm_trigger_connector = new AlarmTriggerConnector(event_bridge_scheduler_client_config, process.env.EVENT_BRIDGE_SCHEDULER_GROUP_NAME!, process.env.ALARM_TRIGGER_FUNCTION_ARN!, process.env.ALARM_TRIGGER_FUNCTION_ROLE_ARN!);
+        const alarm_trigger_connector = new EventBridgeAlarmScheduler(event_bridge_scheduler_client_config, process.env.EVENT_BRIDGE_SCHEDULER_GROUP_NAME!, process.env.ALARM_TRIGGER_FUNCTION_ARN!, process.env.ALARM_TRIGGER_FUNCTION_ROLE_ARN!);
 
         const params = event.body ? JSON.parse(event.body) : {};
         const { device_token, alarm_time }: RequestBody = params;

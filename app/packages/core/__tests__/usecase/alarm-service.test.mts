@@ -1,10 +1,10 @@
 import { describe, test, expect, jest } from '@jest/globals';
-import { Alarm, AlarmTime } from "../../src/domain/alarm.mjs";
-import { Device } from "../../src/domain/device.mjs";
-import { User } from "../../src/domain/user.mjs";
-import { AlarmRepository } from "../../src/service/alarm-repository.mjs";
-import { DeleteError, RegisterError, UpdateError, deleteAlarm, registerAlarm, updateAlarm } from "../../src/service/alarm-service.mjs";
-import { AlarmScheduler } from "../../src/service/alarm-scheduler.mjs";
+import { Alarm, AlarmTime } from "../../src/entity/alarm.mjs";
+import { Device } from "../../src/entity/device.mjs";
+import { User } from "../../src/entity/user.mjs";
+import { AlarmRepository } from "../../src/usecase/alarm-repository.mjs";
+import { DeleteError, RegisterError, UpdateError, deleteAlarm, registerAlarm, updateAlarm } from "../../src/usecase/alarm-service.mjs";
+import { AlarmScheduler } from "../../src/usecase/alarm-scheduler.mjs";
 
 describe('AlarmService', () => {
     describe('アラームの登録', () => {

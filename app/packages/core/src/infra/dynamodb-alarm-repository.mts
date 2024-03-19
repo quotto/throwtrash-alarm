@@ -1,9 +1,9 @@
 import {  DynamoDBClient,DynamoDBClientConfig } from '@aws-sdk/client-dynamodb';
 import { DeleteCommand, DynamoDBDocumentClient, GetCommand, PutCommand, QueryCommand, QueryCommandInput } from '@aws-sdk/lib-dynamodb';
-import { AlarmRepository } from '../service/alarm-repository.mjs';
-import { Alarm, AlarmTime } from '../domain/alarm.mjs';
-import { Device } from '../domain/device.mjs';
-import { User } from '../domain/user.mjs';
+import { AlarmRepository } from '../usecase/alarm-repository.mjs';
+import { Alarm, AlarmTime } from '../entity/alarm.mjs';
+import { Device } from '../entity/device.mjs';
+import { User } from '../entity/user.mjs';
 export class DynamoDBAlarmRepository implements AlarmRepository{
   private db_client: DynamoDBDocumentClient;
   private table_name: string;

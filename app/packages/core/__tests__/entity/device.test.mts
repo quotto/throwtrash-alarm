@@ -1,6 +1,6 @@
 import { describe, test, expect } from '@jest/globals';
-import { ArgumentError } from "../../src/domain/argument-error.mjs";
-import { Device } from "../../src/domain/device.mjs";
+import { ArgumentError } from "../../src/entity/argument-error.mjs";
+import { Device } from "../../src/entity/device.mjs";
 
 describe('Device', () => {
     test('正常にDeviceインスタンスが生成される', () => {

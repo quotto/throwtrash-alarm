@@ -1,10 +1,9 @@
 {
   "name": "@shared/core",
   "version": "1.0.0",
-  "main": "index.js",
   "scripts": {
-    "test": "jest",
-    "build": "tsc -d"
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+    "build": "tsc"
   },
   "author": "",
   "license": "Apache-2.0",
@@ -21,8 +20,8 @@
   "description": "",
   "type": "module",
   "exports": {
-    "./domain/*": "./dist/domain/*",
-    "./repository/*": "./dist/repository/*",
-    "./service/*": "./dist/service/*"
+    "./entity/*": "./dist/entity/*",
+    "./usecase/*": "./dist/usecase/*",
+    "./infra/*": "./dist/infra/*"
   }
 }

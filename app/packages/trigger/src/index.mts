@@ -1,11 +1,11 @@
 import 'source-map-support/register.js';
 import { Callback, Context, EventBridgeEvent, EventBridgeHandler } from 'aws-lambda';
 import * as admin from 'firebase-admin';
-import { FcmSender } from './infra/fcm-sender.mjs';
-import { DynamoDBAlarmRepository } from '@shared/core/repository/dynamodb-alarm-repository.mjs';
-import { DynamoDBTrashScheduleRepository } from './infra/dynamodb-trash-schedule-repository.mjs';
-import { sendMessage } from './usecase/trigger-service.mjs';
-import { AlarmTime } from '@shared/core/domain/alarm-time.mjs';
+import { FcmSender } from '../../core/src/infra/fcm-sender.mjs';
+import { DynamoDBAlarmRepository } from '@shared/core/infra/dynamodb-alarm-repository.mjs';
+import { DynamoDBTrashScheduleRepository } from '../../core/src/infra/dynamodb-trash-schedule-repository.mjs';
+import { sendMessage } from '../../core/src/usecase/trigger-service.mjs';
+import { AlarmTime } from '@shared/core/entity/alarm-time.mjs';
 
 type RequestInput = {
     hour: number;

@@ -1,8 +1,7 @@
 import { describe, test, expect } from '@jest/globals';
-import { Alarm, AlarmTime } from "../../src/domain/alarm.mjs";
-import { ArgumentError } from "../../src/domain/argument-error.mjs";
-import { Device } from "../../src/domain/device.mjs";
-import { User } from "../../src/domain/user.mjs";
+import { Alarm, AlarmTime } from "../../src/entity/alarm.mjs";
+import { Device } from "../../src/entity/device.mjs";
+import { User } from "../../src/entity/user.mjs";
 
 describe('Alarm', () => {
     test('正常にAlarmインスタンスが生成される', () => {

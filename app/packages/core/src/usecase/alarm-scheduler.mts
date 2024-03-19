@@ -1,4 +1,4 @@
-import { AlarmTime } from "../domain/alarm-time.mjs";
+import { AlarmTime } from "../entity/alarm-time.mjs";
 
 export interface AlarmScheduler {
     create(alarm_time: AlarmTime): Promise<boolean>;

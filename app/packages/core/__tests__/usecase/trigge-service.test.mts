@@ -2,11 +2,11 @@ import { jest, describe, test, expect } from '@jest/globals';
 import { sendMessage } from '../../src/usecase/trigger-service.mjs';
 import { TrashSchedule } from 'trash-common';
 import { TrashScheduleRepository } from '../../src/usecase/trash-schedule-repository.mjs';
-import { AlarmRepository } from '@shared/core/service/alarm-repository.mjs';
-import { AlarmTime } from '@shared/core/domain/alarm-time.mjs';
-import { Alarm } from '@shared/core/domain/alarm.mjs';
-import { Device } from '@shared/core/domain/device.mjs';
-import { User } from '@shared/core/domain/user.mjs';
+import { AlarmRepository } from '../../src/usecase/alarm-repository.mjs';
+import { AlarmTime } from '../../src/entity/alarm-time.mjs';
+import { Alarm } from '../../src/entity/alarm.mjs';
+import { Device } from '../../src/entity/device.mjs';
+import { User } from '../../src/entity/user.mjs';
 import { MessageSender } from '../../src/usecase/message-sender.mjs';
 import { NotificationResult, NotificationStatus } from '../../src/entity/notification-result.mjs';
 import { DeviceMessage } from '../../src/entity/device-message.mjs';
@@ -242,5 +242,36 @@ describe('sendMessage', () => {
       new DeviceMessage(new Device("aiueo", "ios"), "もえるゴミ,その他"),
       new DeviceMessage(new Device("kakikukeko", "ios"), "今日出せるゴミはありません")
     ]);
+  });
+  test("デバイスがない", async () => {
+    const date_constructor = global.Date;
+    global.Date = jest.fn(() => new date_constructor("2024-03-17T00:00:00Z")) as any;
+
+    const trash_schedule_repository: TrashScheduleRepository = {
+      findTrashScheduleByUserId: jest.fn().mockReturnValue(
+        {
+        }
+      ) as any
+    };
+    const alarm_repository: AlarmRepository = {
+      save: function (alarm: Alarm): Promise<boolean> {
+        throw new Error('Function not implemented.');
+      },
+      delete: function (alarm: Alarm): Promise<boolean> {
+        throw new Error('Function not implemented.');
+      },
+      findByDeviceToken: function (deviceToken: string): Promise<Alarm | null> {
+        throw new Error('Function not implemented.');
+      },
+      listByAlarmTime: jest.fn().mockReturnValue([]) as any
+    };
+    const message_sender: MessageSender = {
+      sendToDevices: jest.fn().mockReturnValue({status: NotificationStatus.SUCCESS} as NotificationResult) as any
+    };
+    await sendMessage(trash_schedule_repository, alarm_repository, message_sender, new AlarmTime("0000"));
+
+    expect(alarm_repository.listByAlarmTime).toBeCalledWith({hour:0 ,minute: 0});
+    expect(trash_schedule_repository.findTrashScheduleByUserId).toBeCalledTimes(0);
+    expect(message_sender.sendToDevices).toBeCalledTimes(0);
   });
 });

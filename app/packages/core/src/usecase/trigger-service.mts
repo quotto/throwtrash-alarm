@@ -34,28 +34,33 @@ export const sendMessage = async (
     const send_target_devices = target_devices.splice(0, MAX_SEND_DEVICES);
 
     const device_messages: DeviceMessage[] = []
-    send_target_devices.forEach(async (alarm: Alarm) => {
-      const trash_schedule = await trash_schedule_repository.findTrashScheduleByUserId(alarm.getUser().getId());
-      if(!trash_schedule) {
-        console.warn(`ゴミ捨てスケジュールが見つかりませんでした - ${alarm.getUser().getId()}`);
-        return;
-      }
-
-      const today = new Date();
-      console.log(today.toISOString())
-      const enable_trashes: string[] = [];
-      trash_schedule.trashData.forEach((trash_data) => {
-        const trash_type = trash_schedule_service.getEnableTrashData(trash_data, today);
-        if(trash_type) {
-          console.log(trash_type)
-          enable_trashes.push(trash_type.name)
+    const device_tasks: Promise<any>[] = [];
+    send_target_devices.forEach((alarm: Alarm) => {
+      device_tasks.push(new Promise(async (resolve, reject) => {
+        const trash_schedule = await trash_schedule_repository.findTrashScheduleByUserId(alarm.getUser().getId());
+        if(trash_schedule == null) {
+          console.warn(`ゴミ捨てスケジュールが見つかりませんでした - ${alarm.getUser().getId()}`);
+          resolve(false);
         }
-      });
-      const message = enable_trashes.length > 0 ? enable_trashes.join(",") : "今日出せるゴミはありません";
 
-      device_messages.push(new DeviceMessage(alarm.getDevice(), message));
+        const today = new Date();
+        const enable_trashes: string[] = [];
+        trash_schedule!.trashData.forEach((trash_data) => {
+          const trash_type = trash_schedule_service.getEnableTrashData(trash_data, today);
+          if(trash_type) {
+            console.log(trash_type)
+            enable_trashes.push(trash_type.name)
+          }
+        });
+        const message = enable_trashes.length > 0 ? enable_trashes.join(",") : "今日出せるゴミはありません";
+
+        device_messages.push(new DeviceMessage(alarm.getDevice(), message));
+        resolve(true);
+      }));
     });
 
+    await Promise.all(device_tasks);
+    console.debug(device_messages);
     all_send_tasks.push(notification_sender.sendToDevices(device_messages));
   }
 

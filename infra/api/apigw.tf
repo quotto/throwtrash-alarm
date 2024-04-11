@@ -182,7 +182,7 @@ resource "aws_api_gateway_usage_plan_key" "api-plan-key-dev" {
 }
 
 resource "aws_api_gateway_usage_plan_key" "api-plan-key-prod" {
-    usage_plan_id = aws_api_gateway_usage_plan.usage-plan-dev.id
+    usage_plan_id = aws_api_gateway_usage_plan.usage-plan-prod.id
     key_type = "API_KEY"
     key_id = aws_api_gateway_api_key.api-key-prod.id
 }

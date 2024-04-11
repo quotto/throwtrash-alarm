@@ -9,12 +9,14 @@ export class DynamoDBTrashScheduleRepository implements TrashScheduleRepository 
   }
   async findTrashScheduleByUserId(user_id: string) {
     try {
-      const result = await this.db.send(new GetCommand({
+      const input = {
         TableName: this.table_name,
         Key: {
-          user_id: user_id
+          id: user_id
         }
-      }));
+      };
+      console.debug(input);
+      const result = await this.db.send(new GetCommand(input));
       if (result.$metadata.httpStatusCode != 200) {
         throw new Error('ユーザーのゴミ捨てスケジュールの取得に失敗しました');
       }

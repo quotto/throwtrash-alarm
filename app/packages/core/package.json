@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-    "build": "tsc"
+    "build": "rm -rf ./dist;rm ./tsconfig.tsbuildinfo & tsc"
   },
   "author": "",
   "license": "Apache-2.0",

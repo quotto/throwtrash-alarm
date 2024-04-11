@@ -46,12 +46,10 @@ export class DynamoDBAlarmRepository implements AlarmRepository{
       while(true) {
         const input = {
           TableName: this.table_name,
-          IndexName: "alarm_time-index",
-          QueryFilter: {
-            alarm_time: {
-              AttributeValueList: [alarm_time.formatTimeToHHMM()],
-              ComparisonOperator: "EQ"
-            }
+          IndexName: "alarm_time_index",
+          KeyConditionExpression: "alarm_time = :alarm_time",
+          ExpressionAttributeValues: {
+            ":alarm_time": alarm_time.formatTimeToHHMM()
           },
         } as QueryCommandInput;
 

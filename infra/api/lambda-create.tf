@@ -7,7 +7,7 @@ data "archive_file" "create-function-zip" {
 resource "aws_lambda_function" "throwtrash-alarm-create-lambda" {
     function_name = "throwtrash-alarm-create"
     role          = aws_iam_role.throwtrash-alarm-lambda-role.arn
-    handler       = "api/create/controller.handler"
+    handler       = "index.handler"
 
     filename      = data.archive_file.create-function-zip.output_path
     source_code_hash = data.archive_file.create-function-zip.output_base64sha256

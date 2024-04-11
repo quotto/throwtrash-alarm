@@ -7,7 +7,7 @@ data "archive_file" "delete-function-zip" {
 resource "aws_lambda_function" "throwtrash-alarm-delete-lambda" {
     function_name = "throwtrash-alarm-delete"
     role          = aws_iam_role.throwtrash-alarm-lambda-role.arn
-    handler       = "api/delete/controller.handler"
+    handler       = "index.handler"
 
     filename      = data.archive_file.delete-function-zip.output_path
     source_code_hash = data.archive_file.delete-function-zip.output_base64sha256

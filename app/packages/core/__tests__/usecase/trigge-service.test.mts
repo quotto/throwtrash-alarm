@@ -10,6 +10,10 @@ import { User } from '../../src/entity/user.mjs';
 import { MessageSender } from '../../src/usecase/message-sender.mjs';
 import { NotificationResult, NotificationStatus } from '../../src/entity/notification-result.mjs';
 import { DeviceMessage } from '../../src/entity/device-message.mjs';
+import { DynamoDBAlarmRepository } from '../../src/infra/dynamodb-alarm-repository.mjs';
+import { DynamoDBTrashScheduleRepository } from '../../src/infra/dynamodb-trash-schedule-repository.mjs'
+import { FcmSender } from '../../src/infra/fcm-sender.mjs';
+import { initializeApp, applicationDefault } from 'firebase-admin/app';
 
 describe('sendMessage', () => {
   test('1件のデバイスに対して1つのゴミ', async () => {
@@ -273,5 +277,9 @@ describe('sendMessage', () => {
     expect(alarm_repository.listByAlarmTime).toBeCalledWith({hour:0 ,minute: 0});
     expect(trash_schedule_repository.findTrashScheduleByUserId).toBeCalledTimes(0);
     expect(message_sender.sendToDevices).toBeCalledTimes(0);
+  });
+  test("lt", async () => {
+    const app = initializeApp({credential: applicationDefault()});
+    await sendMessage(new DynamoDBTrashScheduleRepository({region: "us-west-1"},"TrashSchedule"),new DynamoDBAlarmRepository({}, "throwtrash-alarm"),new FcmSender(app),new AlarmTime("1129"));
   });
 });

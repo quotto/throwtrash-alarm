@@ -31,6 +31,7 @@ resource "aws_iam_policy" "throwtrash-alarm-trigger-lambda-policy" {
             "Effect": "Allow",
             "Resource": [
                 "${var.alarm_table_arn}",
+                "${var.alarm_table_arn}/*",
                 "${var.trash_schedule_table_arn}"
             ]
         },

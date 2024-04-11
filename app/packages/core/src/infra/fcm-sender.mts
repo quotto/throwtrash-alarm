@@ -10,17 +10,19 @@ export class FcmSender implements MessageSender {
     this.app = app;
   }
   sendToDevices(deviceMessages: DeviceMessage[]): Promise<NotificationResult> {
+    console.debug(deviceMessages);
     const messaging = getMessaging(this.app);
     return new Promise((resolve, reject) => {
       messaging.sendEach(deviceMessages.map((deviceMessage) => {
         return {
-          data: {
+          token: deviceMessage.device.getToken(),
+          notification: {
             title: "今日のゴミ出し",
-            message: deviceMessage.message
-          },
-          token: deviceMessage.device.getToken()
+            body: deviceMessage.message
+          }
         }
       })).then((response) => {
+        console.debug(response);
         if(response.failureCount === 0) {
           resolve( {
             status: NotificationStatus.SUCCESS,

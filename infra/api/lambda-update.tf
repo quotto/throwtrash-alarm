@@ -7,14 +7,14 @@ data "archive_file" "update-function-zip" {
 resource "aws_lambda_function" "throwtrash-alarm-update-lambda" {
     function_name = "throwtrash-alarm-update"
     role          = aws_iam_role.throwtrash-alarm-lambda-role.arn
-    handler       = "api/update/controller.handler"
+    handler       = "index.handler"
 
     filename      = data.archive_file.update-function-zip.output_path
     source_code_hash = data.archive_file.update-function-zip.output_base64sha256
 
     runtime = "nodejs20.x"
 
-    layers = [aws_lambda_layer_version.layer.arn]
+    layers = [var.layer_arn]
 
     logging_config {
         log_format = "JSON"

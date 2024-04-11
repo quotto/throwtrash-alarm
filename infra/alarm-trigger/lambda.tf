@@ -19,12 +19,14 @@ resource "aws_lambda_function" "throwtrash-alarm-trigger-lambda" {
         variables = {
             ALARM_TABLE_NAME = var.alarm_table_name
             TRASH_SCHEDULE_TABLE_NAME = var.trash_schedule_table_name
+            GOOGLE_APPLICATION_CREDENTIALS= "/var/task/firebase-config.json"
         }
 
     }
 
     logging_config {
         log_format = "JSON"
+        log_group = aws_cloudwatch_log_group.throwtrash-alarm-trigger-log-group.name
     }
     tags = local.tags
 }

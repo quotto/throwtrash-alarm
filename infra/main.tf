@@ -7,7 +7,7 @@ variable "trash_schedule_table_name" {
 }
 
 module "layer" {
-  source = "./shared/lambda-layer"
+  source = "./shared"
 }
 
 module "api" {

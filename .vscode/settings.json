@@ -1,5 +1,20 @@
 {
     "search.exclude": {
         "**/node_modules": false
+    },
+    "yaml.schemas": {
+        "https://d33vqc0rt9ld30.cloudfront.net/latest/gzip/CloudFormationResourceSpecification.json": [
+            "*.cf.yaml",
+            "*.cf.yml",
+            "cloud*formation/*.yaml",
+            "cloud*formation/*.yml",
+            "template.yml",
+            "cfn/**.yml",
+            "cfn/**.yaml"
+        ],
+        "https://json.schemastore.org/github-workflow.json": [
+            "file:///workspaces/throwtrash-fcm-trigger/.github/development.yml",
+            "file:///workspaces/throwtrash-fcm-trigger/.github/deploy.yml"
+        ]
     }
 }

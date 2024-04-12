@@ -1,0 +1,61 @@
+name: Deploy
+on:
+  push:
+    branches-ignore:
+      - main
+permissions:
+  id-token: write
+  contents: read
+  issues: write
+  pull-requests: write
+jobs:
+  set-stage:
+    runs-on: ubuntu-latest
+    outputs:
+      STAGE: ${{ steps.set-stage.outputs.STAGE }}
+    steps:
+      - name: Set stage
+        id: set-stage
+        run: |
+          if [ ${{ github.event_name }} == "pull_request" -o ${{ github.ref }} == "refs/heads/release" ]; then
+            echo "STAGE=prod" >> $GITHUB_OUTPUT
+          else
+            echo "STAGE=dev" >> $GITHUB_OUTPUT
+          fi
+  deploy:
+    environment: ${{ needs.set-stage.outputs.STAGE }}
+    env:
+      name: ${{ needs.set-stage.outputs.STAGE }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        id: configure-aws-credentials
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-session-name: GitHubActions
+          aws-region: ${{ vars.AWS_REGION }}
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+      - name: Install Dependencies
+        working-directory:  ./app
+        run: npm install -ws
+      - name: Test
+        working-directory:  ./app
+        run: npm run test
+      - name: Clear and CI Install
+        working-directory:  ./app
+        run: |
+          rm -rf node_modules
+          npm ci --ws
+          npm run build
+      - name: Terraform Init
+        run: terraform init -backend-config="bucket=throwtrash-tfstate-${{ env.name }}"
+      - name: Terraform Plan
+        run: terraform plan -var="trash_schedule_table_arn=${{ secrets.TRASH_SCHEDULE_TABLE_ARN }}" -var="trash_schedule_table_name=TrashSchedule
+      - name: Terraform Apply
+        run: terraform apply -auto-approve -var="trash_schedule_table_arn=${{ secrets.TRASH_SCHEDULE_TABLE_ARN }}" -var="trash_schedule_table_name=TrashSchedule

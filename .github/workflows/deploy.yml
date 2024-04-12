@@ -23,6 +23,8 @@ jobs:
             echo "STAGE=dev" >> $GITHUB_OUTPUT
           fi
   deploy:
+    needs:
+      - set-stage
     environment: ${{ needs.set-stage.outputs.STAGE }}
     env:
       name: ${{ needs.set-stage.outputs.STAGE }}

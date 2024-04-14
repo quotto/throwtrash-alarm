@@ -48,7 +48,7 @@ jobs:
         run: npm install -ws
       - name: Test
         working-directory:  ./app
-        run: npm run test
+        run: npm run test -ws
       - name: Clear and CI Install
         working-directory:  ./app
         run: |

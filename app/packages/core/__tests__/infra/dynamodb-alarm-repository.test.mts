@@ -6,6 +6,6 @@ describe('first', () => {
     test('listByAlarmTime', async () => {
         const repository = new DynamoDBAlarmRepository({}, "throwtrash-alarm");
         const result = await repository.listByAlarmTime(new AlarmTime({hour: 11,minute: 29}));
-        expect(result).toBe(null);
+        expect(result).toBe([]);
     });
  })

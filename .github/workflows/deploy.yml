@@ -60,6 +60,6 @@ jobs:
       - name: Terraform Init
         run: terraform init -backend-config="bucket=throwtrash-tfstate-${{ env.name }}"
       - name: Terraform Plan
-        run: terraform plan -var="trash_schedule_table_arn=${{ secrets.TRASH_SCHEDULE_TABLE_ARN }}" -var="trash_schedule_table_name=TrashSchedule
+        run: terraform plan -var="trash_schedule_table_arn=${{ secrets.TRASH_SCHEDULE_TABLE_ARN }}" -var="trash_schedule_table_name=TrashSchedule"
       - name: Terraform Apply
-        run: terraform apply -auto-approve -var="trash_schedule_table_arn=${{ secrets.TRASH_SCHEDULE_TABLE_ARN }}" -var="trash_schedule_table_name=TrashSchedule
+        run: terraform apply -auto-approve -var="trash_schedule_table_arn=${{ secrets.TRASH_SCHEDULE_TABLE_ARN }}" -var="trash_schedule_table_name=TrashSchedule"

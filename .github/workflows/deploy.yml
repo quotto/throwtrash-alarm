@@ -49,6 +49,8 @@ jobs:
       - name: Test
         working-directory:  ./app
         run: npm run test -w @shared/core
+      - name: Restore firebase credentials
+        run: echo ${{ secrets.FIREBASE_CREDENTIALS }} > ./app/packages/trigger/firebase-config.json
       - name: Clear and CI Install
         working-directory:  ./app
         run: |

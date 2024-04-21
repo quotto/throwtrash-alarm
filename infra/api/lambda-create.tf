@@ -16,6 +16,8 @@ resource "aws_lambda_function" "throwtrash-alarm-create-lambda" {
 
     layers = [var.layer_arn]
 
+    publish = var.environment == "prod"
+
     logging_config {
         log_format = "JSON"
         log_group = aws_cloudwatch_log_group.throwtrash-alarm-log-group.name
@@ -25,7 +27,7 @@ resource "aws_lambda_function" "throwtrash-alarm-create-lambda" {
         variables = {
             ALARM_TABLE_NAME = aws_dynamodb_table.throwtrash-alarm-table.name,
             EVENT_BRIDGE_SCHEDULER_GROUP_NAME = aws_scheduler_schedule_group.throwtrash-alarm-schedule-group.name,
-            ALARM_TRIGGER_FUNCTION_ARN = var.alarm_trigger_lambda_arn
+            ALARM_TRIGGER_FUNCTION_ARN = "${var.alarm_trigger_lambda_arn}:${var.environment}",
 						ALARM_TRIGGER_FUNCTION_ROLE_ARN = aws_iam_role.throwtrash-alarm-scheduler-role.arn
         }
     }
@@ -33,10 +35,16 @@ resource "aws_lambda_function" "throwtrash-alarm-create-lambda" {
     tags = local.tags
 }
 
+resource "aws_lambda_alias" "throwtrash-create-dev" {
+    name            = "dev"
+    function_name   = aws_lambda_function.throwtrash-alarm-create-lambda.function_name
+    function_version = "$LATEST"
+}
+
 resource "aws_lambda_permission" "throwtrash-create-permission-apigw" {
     action        = "lambda:InvokeFunction"
     function_name = aws_lambda_function.throwtrash-alarm-create-lambda.function_name
-    qualifier = "dev"
+    qualifier = aws_lambda_alias.throwtrash-create-dev.name
     principal     = "apigateway.amazonaws.com"
     source_arn   = "${aws_api_gateway_rest_api.api.execution_arn}/*/${aws_api_gateway_method.api-method-post.http_method}/${aws_api_gateway_resource.api-resource-create.path_part}"
 }

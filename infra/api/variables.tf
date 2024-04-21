@@ -5,3 +5,8 @@ variable "alarm_trigger_lambda_arn" {
 variable "layer_arn" {
   type        = string
 }
+
+variable "environment" {
+  type        = string
+  default = "dev"
+}

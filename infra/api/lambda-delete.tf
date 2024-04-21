@@ -16,6 +16,8 @@ resource "aws_lambda_function" "throwtrash-alarm-delete-lambda" {
 
     layers = [var.layer_arn]
 
+    publish = var.environment == "prod"
+
     logging_config {
         log_format = "JSON"
         log_group = aws_cloudwatch_log_group.throwtrash-alarm-log-group.name
@@ -30,10 +32,16 @@ resource "aws_lambda_function" "throwtrash-alarm-delete-lambda" {
     tags = local.tags
 }
 
+resource "aws_lambda_alias" "throwtrash-delete-dev" {
+    name            = "dev"
+    function_name   = aws_lambda_function.throwtrash-alarm-delete-lambda.function_name
+    function_version = "$LATEST"
+}
+
 resource "aws_lambda_permission" "throwtrash-delete-permission-apigw" {
     action        = "lambda:InvokeFunction"
     function_name = aws_lambda_function.throwtrash-alarm-delete-lambda.function_name
-    qualifier = "dev"
+    qualifier = aws_lambda_alias.throwtrash-delete-dev.name
     principal     = "apigateway.amazonaws.com"
     source_arn   = "${aws_api_gateway_rest_api.api.execution_arn}/*/${aws_api_gateway_method.api-method-delete.http_method}/${aws_api_gateway_resource.api-resource-delete.path_part}"
 }

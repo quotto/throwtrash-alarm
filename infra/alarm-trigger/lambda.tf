@@ -15,6 +15,8 @@ resource "aws_lambda_function" "throwtrash-alarm-trigger-lambda" {
 
     layers = [ var.layer_arn ]
 
+    publish = var.environment == "prod"
+
     environment {
         variables = {
             ALARM_TABLE_NAME = var.alarm_table_name
@@ -29,6 +31,19 @@ resource "aws_lambda_function" "throwtrash-alarm-trigger-lambda" {
         log_group = aws_cloudwatch_log_group.throwtrash-alarm-trigger-log-group.name
     }
     tags = local.tags
+}
+
+resource "aws_lambda_alias" "throwtrash-trigger-dev" {
+    name            = "dev"
+    function_name   = aws_lambda_function.throwtrash-alarm-trigger-lambda.function_name
+    function_version = "$LATEST"
+}
+
+resource "aws_lambda_alias" "throwtrash-trigger-prod" {
+    count = var.environment == "prod" ? 1 : 0
+    name            = "prod"
+    function_name   = aws_lambda_function.throwtrash-alarm-trigger-lambda.function_name
+    function_version = aws_lambda_function.throwtrash-alarm-trigger-lambda.version
 }
 
 output "alarm_trigger_lambda_arn" {

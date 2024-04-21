@@ -1,12 +1,9 @@
 import { DynamoDBClientConfig } from '@aws-sdk/client-dynamodb';
 import { APIGatewayEvent, APIGatewayProxyHandler, Context } from 'aws-lambda';
 import 'source-map-support/register.js'
-import { SchedulerClientConfig } from '@aws-sdk/client-scheduler';
-import { deleteAlarm, updateAlarm } from '@shared/core/usecase/alarm-service.mjs';
+import { deleteAlarm } from '@shared/core/usecase/alarm-service.mjs';
 import { ArgumentError } from '@shared/core/entity/argument-error.mjs';
-import { AlarmTime } from '@shared/core/entity/alarm-time.mjs';
 import { DynamoDBAlarmRepository } from '@shared/core/infra/dynamodb-alarm-repository.mjs';
-import { EventBridgeAlarmScheduler } from '@shared/core/infra/eventbridge-alarm-scheduler.mjs';
 
 type RequestBody= {
     device_token: string;
@@ -17,12 +14,6 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayEvent, _c
             region: 'ap-northeast-1'
         };
         const alarmRepository = new DynamoDBAlarmRepository(dynamoDBConfig, process.env.ALARM_TABLE_NAME!);
-
-        const eventBridgeSchedulerClientConfig: SchedulerClientConfig = {
-            region: 'ap-northeast-1',
-        };
-        const alarmTriggerConnector = new EventBridgeAlarmScheduler(eventBridgeSchedulerClientConfig, process.env.EVENT_BRIDGE_SCHEDULER_GROUP_NAME!, process.env.ALARM_TRIGGER_FUNCTION_ARN!, process.env.ALARM_TRIGGER_FUNCTION_ROLE_ARN!);
-
         const params = event.body ? JSON.parse(event.body) : {};
         const { device_token }: RequestBody = params;
 
@@ -42,7 +33,7 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayEvent, _c
                 statusCode: 400,
                 body: JSON.stringify({
                     message: 'アラームの更新に失敗しました。',
-                    error: error.message || '不明なエラー',
+                    error: error.message || '不明なエラーが発生しました',
                 }),
             };
         }
@@ -50,7 +41,7 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayEvent, _c
             statusCode: 500,
             body: JSON.stringify({
                 message: 'アラームの更新に失敗しました。',
-                error: error.message || '不明なエラー',
+                error: error.message || '不明なエラーが発生しました',
             }),
         };
     }

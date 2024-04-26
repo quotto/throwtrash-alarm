@@ -278,8 +278,4 @@ describe('sendMessage', () => {
     expect(trash_schedule_repository.findTrashScheduleByUserId).toBeCalledTimes(0);
     expect(message_sender.sendToDevices).toBeCalledTimes(0);
   });
-  test("lt", async () => {
-    const app = initializeApp({credential: applicationDefault()});
-    await sendMessage(new DynamoDBTrashScheduleRepository({region: "us-west-1"},"TrashSchedule"),new DynamoDBAlarmRepository({}, "throwtrash-alarm"),new FcmSender(app),new AlarmTime("1129"));
-  });
 });

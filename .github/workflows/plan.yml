@@ -60,7 +60,7 @@ jobs:
           npm run build
     - name: Terraform Init
       working-directory: ./infra
-      run: terraform init -backend-config="bucket=throwtrash-tfstate-${{ github.event.pull_request.head.ref }}"
+      run: terraform init -backend-config="bucket=throwtrash-tfstate-${{env.name}}"
     - name: Terraform Plan
       working-directory: ./infra
       id: plan

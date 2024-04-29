@@ -34,7 +34,7 @@ resource "aws_api_gateway_usage_plan_key" "api-plan-key-prod-v1" {
 resource "aws_lambda_permission" "throwtrash-create-permission-apigw-v1" {
     action          = "lambda:InvokeFunction"
     function_name   = var.create_lambda["name"]
-    qualifier       = "v1"
+    qualifier       = aws_lambda_alias.throwtrash-create-alias-v1.name
     principal       = "apigateway.amazonaws.com"
     source_arn      = "${var.api_gateway["execution_arn"]}/*/${var.api_gateway["post_method"]}/${var.api_gateway["create_path_part"]}"
 }
@@ -42,7 +42,7 @@ resource "aws_lambda_permission" "throwtrash-create-permission-apigw-v1" {
 resource "aws_lambda_permission" "throwtrash-delete-permission-apigw-v1" {
     action          = "lambda:InvokeFunction"
     function_name   = var.delete_lambda["name"]
-    qualifier       = "v1"
+    qualifier       = aws_lambda_alias.throwtrash-delete-alias-v1.name
     principal       = "apigateway.amazonaws.com"
     source_arn      = "${var.api_gateway["execution_arn"]}/*/${var.api_gateway["post_method"]}/${var.api_gateway["delete_path_part"]}"
 }
@@ -51,7 +51,7 @@ resource "aws_lambda_permission" "throwtrash-delete-permission-apigw-v1" {
 resource "aws_lambda_permission" "throwtrash-update-permission-apigw-v1" {
     action          = "lambda:InvokeFunction"
     function_name   = var.update_lambda["name"]
-    qualifier       = "v1"
+    qualifier       = aws_lambda_alias.throwtrash-update-alias-v1.name
     principal       = "apigateway.amazonaws.com"
     source_arn      = "${var.api_gateway["execution_arn"]}/*/${var.api_gateway["post_method"]}/${var.api_gateway["update_path_part"]}"
 }

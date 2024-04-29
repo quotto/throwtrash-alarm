@@ -3,3 +3,4 @@
 infra/**/*.zip
 .terraform
 tsconfig.tsbuildinfo
+app/build

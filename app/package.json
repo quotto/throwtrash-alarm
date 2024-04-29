@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "npm install --ws --install-links && npm run build -ws"
+    "build": "npm run build -w @shared/core && npm run build -w @function/create -w @function/update -w @function/delete -w @function/trigger && mkdir -p ./build/nodejs && cp -Lr ./node_modules ./build/nodejs && rm -r ./build/nodejs/node_modules/@function"
   },
   "author": "",
   "license": "Apache-2.0",

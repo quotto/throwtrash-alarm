@@ -13,3 +13,7 @@ variable "trash_schedule_table_name" {
 variable "layer_arn" {
   type        = string
 }
+variable "environment" {
+  type        = string
+  default = "dev"
+}

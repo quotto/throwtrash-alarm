@@ -4,7 +4,6 @@ import { registerAlarm } from '@shared/core/usecase/alarm-service.mjs';
 import { DynamoDBAlarmRepository } from '@shared/core/infra/dynamodb-alarm-repository.mjs';
 import { EventBridgeAlarmScheduler } from '@shared/core/infra/eventbridge-alarm-scheduler.mjs';
 import { DynamoDBClientConfig } from '@aws-sdk/client-dynamodb';
-import { SchedulerClientConfig } from '@aws-sdk/client-scheduler';
 import { ArgumentError } from '@shared/core/entity/argument-error.mjs';
 import { AlarmTime } from '@shared/core/entity/alarm-time.mjs';
 
@@ -24,9 +23,6 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayEvent, _c
         };
         const alarmRepository = new DynamoDBAlarmRepository(dynamoDBConfig, process.env.ALARM_TABLE_NAME!);
 
-        const eventBridgeSchedulerClientConfig: SchedulerClientConfig = {
-            region: 'ap-northeast-1',
-        };
         const alarmTriggerConnector = new EventBridgeAlarmScheduler({}, process.env.EVENT_BRIDGE_SCHEDULER_GROUP_NAME!, process.env.ALARM_TRIGGER_FUNCTION_ARN!, process.env.ALARM_TRIGGER_FUNCTION_ROLE_ARN!);
 
         const params = event.body ? JSON.parse(event.body) : {};

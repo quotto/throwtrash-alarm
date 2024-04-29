@@ -14,7 +14,7 @@ resource "aws_dynamodb_table" "throwtrash-alarm-table" {
     name              = "alarm_time_index"
     hash_key           = "alarm_time"
     projection_type    = "INCLUDE"
-    non_key_attributes = [ "device_token","user_id" ]
+    non_key_attributes = [ "device_token","user_id","platform" ]
   }
   tags = local.tags
 }

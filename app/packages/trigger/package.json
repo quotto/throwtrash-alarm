@@ -9,7 +9,7 @@
   },
   "scripts": {
     "test": "jest",
-    "build": "tsc"
+    "build": "rm -rf ./dist; tsc && cp ./firebase-config.json ./dist"
   },
   "author": "",
   "license": "Apache-2.0",

@@ -25,7 +25,8 @@ export class DynamoDBAlarmRepository implements AlarmRepository{
         throw new Error(`APIの呼び出しに失敗しました - ステータスコード: ${result.$metadata.httpStatusCode}`);
       }
       if(!result.Item) {
-        throw new Error("アラームデータが見つかりませんでした");
+        console.warn(`デバイストークンに一致するアラームデータが見つかりませんでした: ${device_token}`);
+        return null;
       }
       return new Alarm(
         new Device(result.Item.device_token || "", result.Item.platform || ""),
@@ -35,7 +36,7 @@ export class DynamoDBAlarmRepository implements AlarmRepository{
       } catch(e: any) {
         console.error("アラームデータの取得でエラーが発生しました")
         console.error(e.message || "不明なエラー");
-        return null;
+        throw e;
       }
     }
 
@@ -46,12 +47,10 @@ export class DynamoDBAlarmRepository implements AlarmRepository{
       while(true) {
         const input = {
           TableName: this.table_name,
-          IndexName: "alarm_time-index",
-          QueryFilter: {
-            alarm_time: {
-              AttributeValueList: [alarm_time.formatTimeToHHMM()],
-              ComparisonOperator: "EQ"
-            }
+          IndexName: "alarm_time_index",
+          KeyConditionExpression: "alarm_time = :alarm_time",
+          ExpressionAttributeValues: {
+            ":alarm_time": alarm_time.formatTimeToHHMM()
           },
         } as QueryCommandInput;
 
@@ -61,7 +60,6 @@ export class DynamoDBAlarmRepository implements AlarmRepository{
         const result = await this.db_client.send(new QueryCommand(input));
         console.log(result);
         if(result.$metadata.httpStatusCode != 200 || !result.Items) {
-          console.error(result);
           throw new Error(`APIの呼び出しに失敗しました - ステータスコード: ${result.$metadata.httpStatusCode}`);
         }
         result.Items.forEach((item: any) => {
@@ -87,7 +85,7 @@ export class DynamoDBAlarmRepository implements AlarmRepository{
     } catch(e: any) {
       console.error("アラームデータの取得でエラーが発生しました")
       console.error(e.message || "不明なエラー");
-      return [];
+      throw e;
     }
   }
 
@@ -109,7 +107,7 @@ export class DynamoDBAlarmRepository implements AlarmRepository{
     } catch(e: any) {
       console.error("アラームのデータ登録に失敗しました");
       console.error(e.message || "不明なエラー");
-      return false;
+      throw e;
     }
   }
 
@@ -128,7 +126,7 @@ export class DynamoDBAlarmRepository implements AlarmRepository{
     } catch(e: any) {
       console.error("アラームデータの削除でエラーが発生しました");
       console.error(e.message || "不明なエラー");
-      return false;
+      throw e;
     }
   }
 }

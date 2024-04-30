@@ -11,6 +11,14 @@ variable "environment" {
   default = "dev"
 }
 
+variable "zone_id" {
+  type        = string
+}
+
+variable "certificate_arn" {
+  type        = string
+}
+
 module "layer" {
   source = "./shared"
 }
@@ -39,4 +47,6 @@ module "api-gateway-prod-stage" {
   create_lambda = module.api.create_lambda
   delete_lambda = module.api.delete_lambda
   update_lambda = module.api.update_lambda
+  zone_id = var.zone_id
+  certificate_arn = var.certificate_arn
 }

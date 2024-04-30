@@ -67,7 +67,7 @@ jobs:
       run: |
         {
           echo 'plan_out<<EOF'
-          terraform plan -var=trash_schedule_table_arn=${{ secrets.TRASH_SCHEDULE_TABLE_ARN }} -var=trash_schedule_table_name=TrashSchedule -var=environment=${{env.name}} -no-color
+          terraform plan -var=trash_schedule_table_arn=${{ secrets.TRASH_SCHEDULE_TABLE_ARN }} -var=trash_schedule_table_name=TrashSchedule -var=environment=${{env.name}} -var=certificate_arn=${{ secrets.CERTIFICATE_ARN }} -var=zone_id=${{ secrets.ZONE_ID }} -no-color
           echo EOF
         } >> "$GITHUB_OUTPUT"
     - name: Comment PR

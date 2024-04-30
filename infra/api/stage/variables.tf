@@ -36,6 +36,14 @@ variable "api_gateway" {
     })
 }
 
+variable "certificate_arn" {
+    type        = string
+}
+
+variable "zone_id" {
+    type        = string
+}
+
 locals {
     tags = {
         app = "throwtrash"

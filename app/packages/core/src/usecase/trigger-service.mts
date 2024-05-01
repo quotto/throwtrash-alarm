@@ -41,6 +41,7 @@ export const sendMessage = async (
         if(trash_schedule == null) {
           console.warn(`ゴミ捨てスケジュールが見つかりませんでした - ${alarm.getUser().getId()}`);
           resolve(false);
+          return;
         }
 
         const today = new Date();
@@ -61,6 +62,11 @@ export const sendMessage = async (
 
     await Promise.all(device_tasks);
     console.debug(device_messages);
+    if(device_messages.length == 0) {
+      const message = "ゴミ出し情報が1件も取得できませんでした";
+      console.error(message);
+      throw new Error(message);
+    }
     all_send_tasks.push(notification_sender.sendToDevices(device_messages));
   }
 

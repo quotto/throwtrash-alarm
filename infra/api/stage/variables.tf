@@ -31,7 +31,7 @@ variable "api_gateway" {
       execution_arn = string
       post_method = string
       delete_method = string
-      update_method = string
+      put_method = string
       create_path_part = string
       delete_path_part = string
       update_path_part = string

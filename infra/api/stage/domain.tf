@@ -14,7 +14,7 @@ resource "aws_route53_record" "route53-record" {
 
   alias {
     evaluate_target_health = true
-    name                   = split("/", aws_api_gateway_stage.api-stage-prod-v1.invoke_url)[2]
+    name                   = var.api_gateway_custom_domain
     zone_id                = var.api_gateway_zone_id
   }
 }

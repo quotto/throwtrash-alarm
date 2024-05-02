@@ -61,7 +61,7 @@ jobs:
         run: terraform init -backend-config="bucket=throwtrash-tfstate-${{ env.name }}"
       - name: Terraform Plan
         working-directory: ./infra
-        run: terraform plan -var="trash_schedule_table_arn=${{ secrets.TRASH_SCHEDULE_TABLE_ARN }}" -var="trash_schedule_table_name=TrashSchedule" -var="environment=${{ env.name }}" -var="certificate_arn=${{ secrets.CERTIFICATE_ARN }}" -var="zone_id=${{ secrets.ZONE_ID }}"
+        run: terraform plan -var="trash_schedule_table_arn=${{ secrets.TRASH_SCHEDULE_TABLE_ARN }}" -var="trash_schedule_table_name=TrashSchedule" -var="environment=${{ env.name }}" -var="certificate_arn=${{ secrets.CERTIFICATE_ARN }}" -var="zone_id=${{ secrets.ZONE_ID }}" -var="api_gateway_custom_domain=${{ secrets.API_GATEWAY_CUSTOM_DOMAIN }}"
       - name: Terraform Apply
         working-directory: ./infra
-        run: terraform apply -auto-approve -var="trash_schedule_table_arn=${{ secrets.TRASH_SCHEDULE_TABLE_ARN }}" -var="trash_schedule_table_name=TrashSchedule" -var="environment=${{ env.name }}" -var="certificate_arn=${{ secrets.CERTIFICATE_ARN }}" -var="zone_id=${{ secrets.ZONE_ID }}"
+        run: terraform apply -auto-approve -var="trash_schedule_table_arn=${{ secrets.TRASH_SCHEDULE_TABLE_ARN }}" -var="trash_schedule_table_name=TrashSchedule" -var="environment=${{ env.name }}" -var="certificate_arn=${{ secrets.CERTIFICATE_ARN }}" -var="zone_id=${{ secrets.ZONE_ID }}" -var="api_gateway_custom_domain=${{ secrets.API_GATEWAY_CUSTOM_DOMAIN }}"

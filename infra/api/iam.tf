@@ -100,7 +100,7 @@ resource "aws_iam_policy" "throwtrash-alarm-scheduler-policy" {
             ],
             "Effect": "Allow",
             "Resource": [
-                "${var.alarm_trigger_lambda_arn}"
+                "${var.alarm_trigger_lambda_arn}:*"
             ]
         }
     ]

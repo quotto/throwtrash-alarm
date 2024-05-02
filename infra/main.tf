@@ -37,6 +37,7 @@ module "alarm-trigger" {
   trash_schedule_table_arn =  var.trash_schedule_table_arn
   trash_schedule_table_name = var.trash_schedule_table_name
   layer_arn = module.layer.layer_arn
+  environment = var.environment
 }
 
 module "api-gateway-prod-stage" {

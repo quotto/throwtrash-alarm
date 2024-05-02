@@ -19,6 +19,10 @@ variable "certificate_arn" {
   type        = string
 }
 
+variable "api_gateway_custom_domain" {
+  type        = string
+}
+
 module "layer" {
   source = "./shared"
 }
@@ -50,4 +54,5 @@ module "api-gateway-prod-stage" {
   update_lambda = module.api.update_lambda
   zone_id = var.zone_id
   certificate_arn = var.certificate_arn
+  api_gateway_custom_domain = var.api_gateway_custom_domain
 }

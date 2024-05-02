@@ -49,6 +49,10 @@ variable "api_gateway_zone_id" {
     default     = "Z1YSHQZHG15GKL"
 }
 
+variable "api_gateway_custom_domain" {
+    type        = string
+}
+
 locals {
     tags = {
         app = "throwtrash"

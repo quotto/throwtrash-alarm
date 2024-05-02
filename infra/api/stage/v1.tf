@@ -53,7 +53,7 @@ resource "aws_lambda_permission" "throwtrash-update-permission-apigw-v1" {
     function_name   = var.update_lambda["name"]
     qualifier       = aws_lambda_alias.throwtrash-update-alias-v1.name
     principal       = "apigateway.amazonaws.com"
-    source_arn      = "${var.api_gateway["execution_arn"]}/${aws_api_gateway_stage.api-stage-prod-v1.stage_name}/${var.api_gateway["update_method"]}/${var.api_gateway["update_path_part"]}"
+    source_arn      = "${var.api_gateway["execution_arn"]}/${aws_api_gateway_stage.api-stage-prod-v1.stage_name}/${var.api_gateway["put_method"]}/${var.api_gateway["update_path_part"]}"
 }
 
 resource "aws_lambda_alias" "throwtrash-create-alias-v1" {

@@ -5,6 +5,7 @@ import { Alarm } from "../entity/alarm.mjs";
 import { AlarmTime } from "../entity/alarm-time.mjs";
 import { DeviceMessage } from "../entity/device-message.mjs";
 import { DBAdapter, TextCreator, TrashSchedule, TrashScheduleService } from "trash-common";
+import { NotificationStatus } from "../entity/notification-result.mjs";
 
 const MAX_SEND_DEVICES = 500;
 class DBAdapterImple implements DBAdapter {
@@ -72,7 +73,7 @@ export const sendMessage = async (
 
   const result = await Promise.all(all_send_tasks);
   result.forEach((notification_result, index) => {
-    if(notification_result.status === "FAILURE") {
+    if(notification_result.status === NotificationStatus.FAILURE) {
       console.error(`メッセージの送信でエラーが発生しました - 対象範囲: ${index * MAX_SEND_DEVICES + 1} - ${index * MAX_SEND_DEVICES + MAX_SEND_DEVICES}`);
       console.error(notification_result.errorMessages);
     }

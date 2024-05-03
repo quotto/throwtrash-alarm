@@ -28,8 +28,7 @@ export const handler: Handler  = async (event: any, _context: Context, callback:
 
     const message_sender = new FcmSender(firebase_app);
     const alarm_repository = new DynamoDBAlarmRepository({},process.env.ALARM_TABLE_NAME);
-    // TODO: regionの指定は後で削除
-    const trash_schedule_repository = new DynamoDBTrashScheduleRepository({region: "us-west-2"},process.env.TRASH_SCHEDULE_TABLE_NAME);
+    const trash_schedule_repository = new DynamoDBTrashScheduleRepository({},process.env.TRASH_SCHEDULE_TABLE_NAME);
 
     await sendMessage(trash_schedule_repository, alarm_repository, message_sender, new AlarmTime(alarm_time));
 

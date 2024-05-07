@@ -12,11 +12,15 @@ import { NotificationResult, NotificationStatus } from '../../src/entity/notific
 import { DeviceMessage } from '../../src/entity/device-message.mjs';
 
 describe('sendMessage', () => {
-  test('1件のデバイスに対して1つのゴミ', async () => {
+  beforeEach(() => {
     // Dateのコンストラクタをモック化
     const date_constructor = global.Date;
     global.Date = jest.fn(() => new date_constructor("2024-03-17T00:00:00Z")) as any;
 
+    // Date.now()をモック化
+    global.Date.now = jest.fn(() => new Date("2024-03-17T00:00:00Z").getTime()) as any;
+  });
+  test('1件のデバイスに対して1つのゴミ', async () => {
     const trash_schedule_repository: TrashScheduleRepository = {
       findTrashScheduleByUserId: jest.fn().mockReturnValue(
         {
@@ -59,9 +63,6 @@ describe('sendMessage', () => {
     expect(message_sender.sendToDevices).toBeCalledWith([new DeviceMessage(new Device("aiueo", "ios"), "もえるゴミ")]);
   });
   test("1件のデバイスに対して複数のゴミ", async () => {
-    const date_constructor = global.Date;
-    global.Date = jest.fn(() => new date_constructor("2024-03-17T00:00:00Z")) as any;
-
     const trash_schedule_repository: TrashScheduleRepository = {
       findTrashScheduleByUserId: jest.fn().mockReturnValue(
         {
@@ -113,9 +114,6 @@ describe('sendMessage', () => {
     expect(message_sender.sendToDevices).toBeCalledWith([new DeviceMessage(new Device("aiueo", "ios"), "もえるゴミ,プラスチック")]);
   });
   test("1件のデバイスに対してゴミがない", async () => {
-    const date_constructor = global.Date;
-    global.Date = jest.fn(() => new date_constructor("2024-03-17T00:00:00Z")) as any;
-
     const trash_schedule_repository: TrashScheduleRepository = {
       findTrashScheduleByUserId: jest.fn().mockReturnValue(
         {
@@ -167,9 +165,6 @@ describe('sendMessage', () => {
     expect(message_sender.sendToDevices).toBeCalledWith([new DeviceMessage(new Device("aiueo", "ios"), "今日出せるゴミはありません")]);
   });
   test("複数のデバイス", async () => {
-    const date_constructor = global.Date;
-    global.Date = jest.fn(() => new date_constructor("2024-03-17T00:00:00Z")) as any;
-
     const trash_schedule_repository: TrashScheduleRepository = {
       findTrashScheduleByUserId: jest.fn<(user_id: string)=> TrashSchedule | undefined>().mockImplementation((user_id: string) => {
         if(user_id === "test1") {
@@ -243,9 +238,6 @@ describe('sendMessage', () => {
     ]);
   });
   test("対象の時間帯に登録されているデバイストークンが無い場合は何もせずに処理を終了する", async () => {
-    const date_constructor = global.Date;
-    global.Date = jest.fn(() => new date_constructor("2024-03-17T00:00:00Z")) as any;
-
     const trash_schedule_repository: TrashScheduleRepository = {
       findTrashScheduleByUserId: jest.fn().mockReturnValue(
         {
@@ -303,9 +295,6 @@ describe('sendMessage', () => {
     expect(trash_schedule_repository.findTrashScheduleByUserId).toBeCalledWith("test");
   });
   test("デバイストークンの登録数とゴミ出しスケジュールの取得数が一致しない場合でもゴミ出しスケジュールが1件以上ある場合はメッセージを送信する", async () => {
-    const date_constructor = global.Date;
-    global.Date = jest.fn(() => new date_constructor("2024-03-17T00:00:00Z")) as any;
-
     const trash_schedule_repository: TrashScheduleRepository = {
       findTrashScheduleByUserId: jest.fn(async(user_id: string) => {
         if(user_id === "test1") {

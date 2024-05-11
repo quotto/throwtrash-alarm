@@ -1,6 +1,6 @@
 import { AlarmTime } from "../entity/alarm.mjs";
 import { AlarmScheduler } from "../usecase/alarm-scheduler.mjs";
-import { CreateScheduleCommand, SchedulerClient, FlexibleTimeWindowMode, SchedulerClientConfig, GetScheduleCommand } from "@aws-sdk/client-scheduler"
+import { CreateScheduleCommand, SchedulerClient, FlexibleTimeWindowMode, SchedulerClientConfig, GetScheduleCommand, ResourceNotFoundException } from "@aws-sdk/client-scheduler"
 
 export class EventBridgeAlarmScheduler implements AlarmScheduler {
     private scheduler: SchedulerClient;
@@ -79,6 +79,10 @@ export class EventBridgeAlarmScheduler implements AlarmScheduler {
             }
             return result.Name;
         } catch (e: any) {
+            if (e instanceof ResourceNotFoundException) {
+                console.log(`アラーム${event_bridge_scheduler_name}が見つかりませんでした`);
+                return null;
+            }
             console.error(`アラーム${event_bridge_scheduler_name}の取得でエラーが発生しました`)
             console.error(e.message);
             throw e;

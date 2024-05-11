@@ -42,7 +42,7 @@ describe('DynamoDBTrashScheduleRepository', () => {
                 }
             );
 
-            ddbMock.on(GetCommand, { TableName: shared_table_name, Key: { id: shared_id } }).resolves(
+            ddbMock.on(GetCommand, { TableName: shared_table_name, Key: { shared_id: shared_id } }).resolves(
                 {
                     Item: { id: shared_id, description: description },
                     $metadata: { httpStatusCode: 200 }
@@ -77,7 +77,7 @@ describe('DynamoDBTrashScheduleRepository', () => {
                 }
             );
 
-            ddbMock.on(GetCommand, { TableName: shared_table_name, Key: { id: shared_id } }).resolves({
+            ddbMock.on(GetCommand, { TableName: shared_table_name, Key: { shared_id: shared_id } }).resolves({
                 $metadata: { httpStatusCode: 200 }
             });
 
@@ -108,7 +108,7 @@ describe('DynamoDBTrashScheduleRepository', () => {
                 $metadata: { httpStatusCode: 200 }
             });
 
-            ddbMock.on(GetCommand, { TableName: shared_table_name, Key: { id: shared_id } }).resolves({
+            ddbMock.on(GetCommand, { TableName: shared_table_name, Key: { shared_id: shared_id } }).resolves({
                 $metadata: { httpStatusCode: 500 }
             });
 

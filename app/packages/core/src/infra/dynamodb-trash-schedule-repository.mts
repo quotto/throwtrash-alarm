@@ -30,7 +30,7 @@ export class DynamoDBTrashScheduleRepository implements TrashScheduleRepository 
         const sharedInput = {
           TableName: this.shared_table_name,
           Key: {
-            id: result.Item.shared_id
+            shared_id: result.Item.shared_id
           }
         };
         console.debug(sharedInput);

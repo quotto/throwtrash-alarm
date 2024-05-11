@@ -64,4 +64,6 @@ jobs:
         run: terraform plan -var="trash_schedule_table_name=TrashSchedule" -var="environment=${{ env.name }}" -var="certificate_arn=${{ secrets.CERTIFICATE_ARN }}" -var="zone_id=${{ secrets.ZONE_ID }}" -var="api_gateway_custom_domain=${{ secrets.API_GATEWAY_CUSTOM_DOMAIN }}" -var="shared_trash_schedule_table_name=throwtrash-shared-schedule"
       - name: Terraform Apply
         working-directory: ./infra
-        run: terraform apply -auto-approve -var="trash_schedule_table_name=TrashSchedule" -var="environment=${{ env.name }}" -var="certificate_arn=${{ secrets.CERTIFICATE_ARN }}" -var="zone_id=${{ secrets.ZONE_ID }}" -var="api_gateway_custom_domain=${{ secrets.API_GATEWAY_CUSTOM_DOMAIN }}" -var="shared_trash_schedule_table_name=throwtrash-shared-schedule"
+        run: |
+          export TF_LOG=TRACE
+          terraform apply -auto-approve -var="trash_schedule_table_name=TrashSchedule" -var="environment=${{ env.name }}" -var="certificate_arn=${{ secrets.CERTIFICATE_ARN }}" -var="zone_id=${{ secrets.ZONE_ID }}" -var="api_gateway_custom_domain=${{ secrets.API_GATEWAY_CUSTOM_DOMAIN }}" -var="shared_trash_schedule_table_name=throwtrash-shared-schedule"

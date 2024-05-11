@@ -21,6 +21,7 @@ resource "aws_lambda_function" "throwtrash-alarm-trigger-lambda" {
         variables = {
             ALARM_TABLE_NAME = var.alarm_table_name
             TRASH_SCHEDULE_TABLE_NAME = var.trash_schedule_table_name
+            SHARED_TRASH_SCHEDULE_TABLE_NAME = var.shared_trash_schedule_table_name
             GOOGLE_APPLICATION_CREDENTIALS= "/var/task/firebase-config.json"
         }
 

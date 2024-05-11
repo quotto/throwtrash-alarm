@@ -17,9 +17,9 @@ jobs:
         id: set-stage
         run: |
           if [ ${{ github.event_name }} == "pull_request" -o ${{ github.ref }} == "refs/heads/release" ]; then
-            echo "STAGE=prod" >> $GITHUB_OUTPUT
+          echo "STAGE=prod" >> $GITHUB_OUTPUT
           else
-            echo "STAGE=dev" >> $GITHUB_OUTPUT
+          echo "STAGE=dev" >> $GITHUB_OUTPUT
           fi
   deploy:
     needs:
@@ -61,7 +61,7 @@ jobs:
         run: terraform init -backend-config="bucket=throwtrash-tfstate-${{ env.name }}"
       - name: Terraform Plan
         working-directory: ./infra
-        run: terraform plan -var="trash_schedule_table_arn=${{ secrets.TRASH_SCHEDULE_TABLE_ARN }}" -var="trash_schedule_table_name=TrashSchedule" -var="environment=${{ env.name }}" -var="certificate_arn=${{ secrets.CERTIFICATE_ARN }}" -var="zone_id=${{ secrets.ZONE_ID }}" -var="api_gateway_custom_domain=${{ secrets.API_GATEWAY_CUSTOM_DOMAIN }}"
+        run: terraform plan -var="trash_schedule_table_name=TrashSchedule" -var="environment=${{ env.name }}" -var="certificate_arn=${{ secrets.CERTIFICATE_ARN }}" -var="zone_id=${{ secrets.ZONE_ID }}" -var="api_gateway_custom_domain=${{ secrets.API_GATEWAY_CUSTOM_DOMAIN }}" -var="shared_trash_schedule_table_name=throwtrash-shared-schedule"
       - name: Terraform Apply
         working-directory: ./infra
-        run: terraform apply -auto-approve -var="trash_schedule_table_arn=${{ secrets.TRASH_SCHEDULE_TABLE_ARN }}" -var="trash_schedule_table_name=TrashSchedule" -var="environment=${{ env.name }}" -var="certificate_arn=${{ secrets.CERTIFICATE_ARN }}" -var="zone_id=${{ secrets.ZONE_ID }}" -var="api_gateway_custom_domain=${{ secrets.API_GATEWAY_CUSTOM_DOMAIN }}"
+        run: terraform apply -auto-approve -var="trash_schedule_table_name=TrashSchedule" -var="environment=${{ env.name }}" -var="certificate_arn=${{ secrets.CERTIFICATE_ARN }}" -var="zone_id=${{ secrets.ZONE_ID }}" -var="api_gateway_custom_domain=${{ secrets.API_GATEWAY_CUSTOM_DOMAIN }}" -var="shared_trash_schedule_table_name=throwtrash-shared-schedule"

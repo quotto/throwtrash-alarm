@@ -4,10 +4,10 @@ variable "alarm_table_arn" {
 variable "alarm_table_name" {
   type        = string
 }
-variable "trash_schedule_table_arn" {
+variable "trash_schedule_table_name" {
   type        = string
 }
-variable "trash_schedule_table_name" {
+variable "shared_trash_schedule_table_name" {
   type        = string
 }
 variable "layer_arn" {

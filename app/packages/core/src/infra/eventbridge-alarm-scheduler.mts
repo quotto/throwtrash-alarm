@@ -1,6 +1,6 @@
 import { AlarmTime } from "../entity/alarm.mjs";
 import { AlarmScheduler } from "../usecase/alarm-scheduler.mjs";
-import { ResourceNotFoundException, CreateScheduleCommand, SchedulerClient, FlexibleTimeWindowMode, SchedulerClientConfig, GetScheduleCommand } from "@aws-sdk/client-scheduler"
+import { CreateScheduleCommand, SchedulerClient, FlexibleTimeWindowMode, SchedulerClientConfig, GetScheduleCommand } from "@aws-sdk/client-scheduler"
 
 export class EventBridgeAlarmScheduler implements AlarmScheduler {
     private scheduler: SchedulerClient;

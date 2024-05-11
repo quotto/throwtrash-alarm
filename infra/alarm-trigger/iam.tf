@@ -32,7 +32,8 @@ resource "aws_iam_policy" "throwtrash-alarm-trigger-lambda-policy" {
             "Resource": [
                 "${var.alarm_table_arn}",
                 "${var.alarm_table_arn}/*",
-                "${var.trash_schedule_table_arn}"
+                "arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${var.trash_schedule_table_name}",
+                "arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${var.shared_trash_schedule_table_name}"
             ]
         },
         {

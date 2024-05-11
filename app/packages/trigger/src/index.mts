@@ -24,7 +24,7 @@ export const handler: Handler  = async (event: any, _context: Context, callback:
         throw new Error("TRASH_SCHEDULE_TABLE_NAMEが設定されていません");
     }
     if(!process.env.SHARED_TRASH_SCHEDULE_TABLE_NAME) {
-        throw new Error("TRASH_SCHEDULE_TABLE_NAMEが設定されていません");
+        throw new Error("SHARED_TRASH_SCHEDULE_TABLE_NAMEが設定されていません");
     }
 
     const alarm_time: RequestInput = event.alarm_time;

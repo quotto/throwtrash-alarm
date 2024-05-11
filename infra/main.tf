@@ -1,8 +1,8 @@
-variable "trash_schedule_table_arn" {
+variable "trash_schedule_table_name" {
   type        = string
 }
 
-variable "trash_schedule_table_name" {
+variable "shared_trash_schedule_table_name" {
   type        = string
 }
 
@@ -23,6 +23,9 @@ variable "api_gateway_custom_domain" {
   type        = string
 }
 
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
+
 module "layer" {
   source = "./shared"
 }
@@ -38,8 +41,8 @@ module "alarm-trigger" {
   source = "./alarm-trigger"
   alarm_table_arn = module.api.alarm_table_arn
   alarm_table_name = module.api.alarm_table_name
-  trash_schedule_table_arn =  var.trash_schedule_table_arn
   trash_schedule_table_name = var.trash_schedule_table_name
+  shared_trash_schedule_table_name = var.shared_trash_schedule_table_name
   layer_arn = module.layer.layer_arn
   environment = var.environment
 }

@@ -50,12 +50,15 @@ export class EventBridgeAlarmScheduler implements AlarmScheduler {
                 State: "ENABLED",
                 Description: "ゴミ捨てのアラーム",
             }));
+            if(result.$metadata.httpStatusCode !== 200) {
+                throw new Error("アラームの作成に失敗しました")
+            }
             console.log(`アラームを作成しました: ${result.ScheduleArn}`)
             return true;
         } catch (e: any) {
             console.error(`アラーム${event_bridge_scheduler_name}の作成でエラーが発生しました`)
             console.error(e.message);
-            return false;
+            throw e;
         }
 
     }
@@ -67,12 +70,18 @@ export class EventBridgeAlarmScheduler implements AlarmScheduler {
                 Name: event_bridge_scheduler_name,
                 GroupName: this.group_name
             }));
-            return result.Name!;
-        } catch (e: any) {
-            if (e instanceof ResourceNotFoundException) {
-                console.log(`アラーム${event_bridge_scheduler_name}が見つかりませんでした`);
+            if(result.$metadata.httpStatusCode !== 200) {
+                throw new Error("アラームの取得に失敗しました")
             }
-            return null;
+            if (!result.Name) {
+                console.log(`アラーム${event_bridge_scheduler_name}が見つかりませんでした`);
+                return null;
+            }
+            return result.Name;
+        } catch (e: any) {
+            console.error(`アラーム${event_bridge_scheduler_name}の取得でエラーが発生しました`)
+            console.error(e.message);
+            throw e;
         }
     }
 }

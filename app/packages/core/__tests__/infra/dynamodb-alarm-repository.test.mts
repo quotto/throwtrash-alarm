@@ -1,6 +1,4 @@
-import { jest } from '@jest/globals';
 import { mockClient } from 'aws-sdk-client-mock';
-import  clientdynamodb, { DynamoDBClient, TransactionConflictException } from '@aws-sdk/client-dynamodb';
 import  libdynamodb, { DynamoDBDocumentClient, GetCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { Alarm, AlarmTime } from '../../src/entity/alarm.mjs';
 
@@ -13,7 +11,7 @@ describe('DynamoDBAlarmRepository', () => {
     beforeEach(() => {
       ddbMock.reset();
     });
-    test('should return an alarm', async () => {
+    test('共有スケジュールなしで正常に取得できること', async () => {
       ddbMock.on(GetCommand).resolves({
         Item: {
           device_token: 'dummy_device_token',

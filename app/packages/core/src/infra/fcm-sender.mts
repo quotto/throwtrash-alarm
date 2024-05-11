@@ -44,7 +44,7 @@ export class FcmSender implements MessageSender {
       }).catch((e: any) => {
         console.error("メッセージの送信でエラーが発生しました");
         console.error(e.message || "不明なエラー")
-        reject();
+        reject(e);
       });
     });
   }

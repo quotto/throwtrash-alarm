@@ -23,12 +23,15 @@ export const handler: Handler  = async (event: any, _context: Context, callback:
     if(!process.env.TRASH_SCHEDULE_TABLE_NAME) {
         throw new Error("TRASH_SCHEDULE_TABLE_NAMEが設定されていません");
     }
+    if(!process.env.SHARED_TRASH_SCHEDULE_TABLE_NAME) {
+        throw new Error("TRASH_SCHEDULE_TABLE_NAMEが設定されていません");
+    }
 
     const alarm_time: RequestInput = event.alarm_time;
 
     const message_sender = new FcmSender(firebase_app);
     const alarm_repository = new DynamoDBAlarmRepository({},process.env.ALARM_TABLE_NAME);
-    const trash_schedule_repository = new DynamoDBTrashScheduleRepository({},process.env.TRASH_SCHEDULE_TABLE_NAME);
+    const trash_schedule_repository = new DynamoDBTrashScheduleRepository({},process.env.TRASH_SCHEDULE_TABLE_NAME, process.env.SHARED_TRASH_SCHEDULE_TABLE_NAME);
 
     await sendMessage(trash_schedule_repository, alarm_repository, message_sender, new AlarmTime(alarm_time));
 

@@ -27,8 +27,8 @@ export class DeleteError extends Error {
 
 export const registerAlarm = async (alarm_repository: AlarmRepository, alarm_trigger_connector: AlarmScheduler,deviceToken: string, alarm_time: AlarmTime, userId: string, platform: string) => {
     const new_alarm = new Alarm(new Device(deviceToken, platform), alarm_time,new User(userId))
-    if(await alarm_trigger_connector.findByTime(new_alarm.getAlarmTime()) === null) {
-        if(!await alarm_trigger_connector.create(new_alarm.getAlarmTime())) {
+    if(await alarm_trigger_connector.findByTime(new_alarm.alarmTime) === null) {
+        if(!await alarm_trigger_connector.create(new_alarm.alarmTime)) {
             throw new RegisterError("アラームの作成に失敗しました");
         }
     }
@@ -43,9 +43,9 @@ export const updateAlarm = async (alarm_repository: AlarmRepository, alarm_trigg
     }
     const alarm = await alarm_repository.findByDeviceToken(device_token);
     if(alarm) {
-        const updatedAlarm = alarm.updateTime(alarm_time);
-        if(await alarm_trigger_connector.findByTime(updatedAlarm.getAlarmTime()) === null) {
-            if(!await alarm_trigger_connector.create(updatedAlarm.getAlarmTime())) {
+        const updatedAlarm = alarm.updateAlarmTime(alarm_time);
+        if(await alarm_trigger_connector.findByTime(updatedAlarm.alarmTime) === null) {
+            if(!await alarm_trigger_connector.create(updatedAlarm.alarmTime)) {
                 throw new UpdateError("アラームトリガーの作成に失敗しました");
             }
         }

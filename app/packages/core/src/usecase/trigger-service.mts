@@ -38,9 +38,9 @@ export const sendMessage = async (
     const device_tasks: Promise<any>[] = [];
     send_target_devices.forEach((alarm: Alarm) => {
       device_tasks.push(new Promise(async (resolve, reject) => {
-        const trash_schedule = await trash_schedule_repository.findTrashScheduleByUserId(alarm.getUser().getId());
+        const trash_schedule = await trash_schedule_repository.findTrashScheduleByUserId(alarm.user.getId());
         if(trash_schedule == null) {
-          console.warn(`ユーザーIDに一致するゴミ出しスケジュールが見つかりませんでした - ユーザーID: ${alarm.getUser().getId()}`);
+          console.warn(`ユーザーIDに一致するゴミ出しスケジュールが見つかりませんでした - ユーザーID: ${alarm.user.getId()}`);
           resolve(false);
           return;
         }
@@ -56,7 +56,7 @@ export const sendMessage = async (
         });
         const message = enable_trashes.length > 0 ? enable_trashes.join(",") : "今日出せるゴミはありません";
 
-        device_messages.push(new DeviceMessage(alarm.getDevice(), message));
+        device_messages.push(new DeviceMessage(alarm.device, message));
         resolve(true);
       }));
     });

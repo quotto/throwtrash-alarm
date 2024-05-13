@@ -413,4 +413,129 @@ describe('DynamoDBAlarmRepository', () => {
       await expect(async()=>await alarmRepository.delete(new Alarm(new Device('dummy_device_token', 'ios'),new AlarmTime('0800'),new User('dummy_user_id')))).rejects.toThrow(Error);
     });
   });
+  describe('saveAll', () => {
+    test('25件以下の一括保存が正常に実行されること', async () => {
+      ddbMock.on(libdynamodb.BatchWriteCommand, {
+        RequestItems: {
+          dummy_table_name: [
+            {
+              PutRequest: {
+                Item: {
+                  device_token: 'dummy',
+                  platform: 'ios',
+                  alarm_time: '0800',
+                  user_id: 'dummy_user_id',
+                  created_at: '2022-01-01T00:00:00.000Z'
+                }
+              }
+            }
+          ]
+        }
+      }).resolves({
+        $metadata: {
+          httpStatusCode: 200
+        }
+      });
+      const alarmRepository = new DynamoDBAlarmRepository({}, 'dummy_table_name');
+      await alarmRepository.saveAll([new Alarm(new Device('dummy_device_token', 'ios'),new AlarmTime('0800'),new User('dummy_user_id'))]);
+    });
+    test('26件以上の一括保存が正常に実行されること', async () => {
+      const alarmRepository = new DynamoDBAlarmRepository({}, 'dummy_table_name');
+      const alarms = Array.from({length: 26}, (_, i) => new Alarm(new Device(`dummy_device_token_${i}`, 'ios'),new AlarmTime('0800'),new User('dummy_user_id')));
+      const first_batch_items = alarms.slice(0, 25).map((alarm) => {
+        return {
+          PutRequest: {
+            Item: {
+              device_token: alarm.device.getToken(),
+              platform: alarm.device.getPlatform(),
+              alarm_time: alarm.alarmTime.formatTimeToHHMM(),
+              user_id: alarm.user.getId(),
+              created_at: alarm.alarmHistory.created_at.toISOString()
+            }
+          }
+        };
+      });
+      const second_batch_items = alarms.slice(25).map((alarm) => {
+        return {
+          PutRequest: {
+            Item: {
+              device_token: alarm.device.getToken(),
+              platform: alarm.device.getPlatform(),
+              alarm_time: alarm.alarmTime.formatTimeToHHMM(),
+              user_id: alarm.user.getId(),
+              created_at: alarm.alarmHistory.created_at.toISOString()
+            }
+          }
+        };
+      });
+
+      ddbMock.on(libdynamodb.BatchWriteCommand, {
+        RequestItems: {
+          dummy_table_name: first_batch_items
+        }
+      }).resolves({
+        $metadata: {
+          httpStatusCode: 200
+        }
+      }).on(libdynamodb.BatchWriteCommand, {
+        RequestItems: {
+          dummy_table_name: second_batch_items
+        }
+      }).resolves({
+        $metadata: {
+          httpStatusCode: 200
+        }
+      });
+      await alarmRepository.saveAll(alarms);
+    });
+    test('26件以上のデータ保存でAPIエラーが発生した場合でも処理が続行されること', async () => {
+      const alarmRepository = new DynamoDBAlarmRepository({}, 'dummy_table_name');
+      const alarms = Array.from({length: 26}, (_, i) => new Alarm(new Device(`dummy_device_token_${i}`, 'ios'),new AlarmTime('0800'),new User('dummy_user_id')));
+      const first_batch_items = alarms.slice(0, 25).map((alarm) => {
+        return {
+          PutRequest: {
+            Item: {
+              device_token: alarm.device.getToken(),
+              platform: alarm.device.getPlatform(),
+              alarm_time: alarm.alarmTime.formatTimeToHHMM(),
+              user_id: alarm.user.getId(),
+              created_at: alarm.alarmHistory.created_at.toISOString()
+            }
+          }
+        };
+      });
+      const second_batch_items = alarms.slice(25).map((alarm) => {
+        return {
+          PutRequest: {
+            Item: {
+              device_token: alarm.device.getToken(),
+              platform: alarm.device.getPlatform(),
+              alarm_time: alarm.alarmTime.formatTimeToHHMM(),
+              user_id: alarm.user.getId(),
+              created_at: alarm.alarmHistory.created_at.toISOString()
+            }
+          }
+        };
+      });
+
+      ddbMock.on(libdynamodb.BatchWriteCommand, {
+        RequestItems: {
+          dummy_table_name: first_batch_items
+        }
+      }).resolves({
+        $metadata: {
+          httpStatusCode: 501
+        }
+      }).on(libdynamodb.BatchWriteCommand, {
+        RequestItems: {
+          dummy_table_name: second_batch_items
+        }
+      }).resolves({
+        $metadata: {
+          httpStatusCode: 500
+        }
+      });
+      await alarmRepository.saveAll(alarms);
+    });
+  });
 });

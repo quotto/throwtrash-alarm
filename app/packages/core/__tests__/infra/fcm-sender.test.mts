@@ -57,8 +57,11 @@ describe('FcmSender', () => {
         new DeviceMessage(new Device('test-token', 'ios'), 'test-message'),
       ];
       const result = await sender.sendToDevices(deviceMessages);
-      expect(result.status).toBe(NotificationStatus.SUCCESS);
-      expect(result.errorMessages).toEqual([]);
+      expect(result.length).toBe(1);
+      expect(result[0].status).toBe(NotificationStatus.SUCCESS);
+      expect(result[0].deviceToken).toBe('test-token');
+      expect(result[0].sendMessage).toBe('test-message');
+      expect(result[0].errorMessage).toBeUndefined();
     });
     test('2件のメッセージが正常に送信できること', async () => {
       const sender = new FcmSender(initializeApp());
@@ -67,40 +70,70 @@ describe('FcmSender', () => {
         new DeviceMessage(new Device('test-token2', 'ios'), 'test-message2'),
       ];
       const result = await sender.sendToDevices(deviceMessages);
-      expect(result.status).toBe(NotificationStatus.SUCCESS);
-      expect(result.errorMessages).toEqual([]);
+      expect(result.length).toBe(2);
+      expect(result[0].status).toBe(NotificationStatus.SUCCESS);
+      expect(result[0].deviceToken).toBe('test-token');
+      expect(result[0].sendMessage).toBe('test-message');
+      expect(result[0].errorMessage).toBeUndefined();
+      expect(result[1].status).toBe(NotificationStatus.SUCCESS);
+      expect(result[1].deviceToken).toBe('test-token2');
+      expect(result[1].sendMessage).toBe('test-message2');
+      expect(result[1].errorMessage).toBeUndefined();
     });
     test('メッセージが無い場合も正常終了すること', async () => {
       const sender = new FcmSender(initializeApp());
       const deviceMessages:  DeviceMessage[] = [];
       const result = await sender.sendToDevices(deviceMessages);
-      expect(result.status).toBe(NotificationStatus.SUCCESS);
-      expect(result.errorMessages).toEqual([]);
+      expect(result.length).toBe(0);
     });
-    test('複数のメッセージのうち1件が失敗した場合、レスポンスにエラー情報が含まれること', ()=>{
+    test('複数のメッセージのうち1件が失敗した場合、レスポンスにエラー情報が含まれること', async ()=>{
       const sender = new FcmSender(initializeApp());
       const deviceMessages:  DeviceMessage[] = [
         new DeviceMessage(new Device('test-token', 'ios'), 'test-message'),
         new DeviceMessage(new Device('error-token', 'ios'), 'error-message'),
         new DeviceMessage(new Device('test-token2', 'ios'), 'test-message2'),
       ];
-      return expect(sender.sendToDevices(deviceMessages)).resolves.toEqual({
-        status: NotificationStatus.FAILURE,
-        errorMessages: [deviceMessages[1]]
-      });
+      const result = await sender.sendToDevices(deviceMessages);
+      expect(result.length).toBe(3);
+      expect(result[0].status).toBe(NotificationStatus.SUCCESS);
+      expect(result[0].deviceToken).toBe('test-token');
+      expect(result[0].sendMessage).toBe('test-message');
+      expect(result[0].errorMessage).toBeUndefined();
+      expect(result[1].status).toBe(NotificationStatus.FAILURE);
+      expect(result[1].deviceToken).toBe('error-token');
+      expect(result[1].sendMessage).toBe('error-message');
+      expect(result[1].errorMessage).toBe('error-message');
+      expect(result[2].status).toBe(NotificationStatus.SUCCESS);
+      expect(result[2].deviceToken).toBe('test-token2');
+      expect(result[2].sendMessage).toBe('test-message2');
+      expect(result[2].errorMessage).toBeUndefined();
     });
-    test('複数のメッセージのうち複数件が失敗した場合、レスポンスにエラー情報が含まれること', ()=>{
+    test('複数のメッセージのうち複数件が失敗した場合、レスポンスにエラー情報が含まれること', async ()=>{
       const sender = new FcmSender(initializeApp());
       const deviceMessages:  DeviceMessage[] = [
         new DeviceMessage(new Device('test-token', 'ios'), 'test-message'),
         new DeviceMessage(new Device('error-token', 'ios'), 'error-message'),
-        new DeviceMessage(new Device('error-token', 'ios'), 'error-message'),
+        new DeviceMessage(new Device('error-token', 'ios'), 'error-message2'),
         new DeviceMessage(new Device('test-token2', 'ios'), 'test-message2'),
       ];
-      return expect(sender.sendToDevices(deviceMessages)).resolves.toEqual({
-        status: NotificationStatus.FAILURE,
-        errorMessages: [deviceMessages[1], deviceMessages[2]]
-      });
+      const result = await sender.sendToDevices(deviceMessages);
+      expect(result.length).toBe(4);
+      expect(result[0].status).toBe(NotificationStatus.SUCCESS);
+      expect(result[0].deviceToken).toBe('test-token');
+      expect(result[0].sendMessage).toBe('test-message');
+      expect(result[0].errorMessage).toBeUndefined();
+      expect(result[1].status).toBe(NotificationStatus.FAILURE);
+      expect(result[1].deviceToken).toBe('error-token');
+      expect(result[1].sendMessage).toBe('error-message');
+      expect(result[1].errorMessage).toBe('error-message');
+      expect(result[2].status).toBe(NotificationStatus.FAILURE);
+      expect(result[2].deviceToken).toBe('error-token');
+      expect(result[2].sendMessage).toBe('error-message2');
+      expect(result[2].errorMessage).toBe('error-message');
+      expect(result[3].status).toBe(NotificationStatus.SUCCESS);
+      expect(result[3].deviceToken).toBe('test-token2');
+      expect(result[3].sendMessage).toBe('test-message2');
+      expect(result[3].errorMessage).toBeUndefined();
     });
     test('sendEachで異常終了した場合、エラーが発生すること', async ()=>{
       const sender = new FcmSender(initializeApp());

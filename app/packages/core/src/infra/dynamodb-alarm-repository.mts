@@ -145,6 +145,9 @@ export class DynamoDBAlarmRepository implements AlarmRepository{
         if(result.$metadata.httpStatusCode != 200) {
           throw new Error(`APIの呼び出しに失敗しました - ステータスコード: ${result.$metadata.httpStatusCode}`);
         }
+        if(result.UnprocessedItems && result.UnprocessedItems[this.table_name]) {
+          console.error(`保存に失敗したデータがあります: ${JSON.stringify(result.UnprocessedItems[this.table_name])}`);
+        }
       } catch(e: any) {
         console.error("アラームのデータ登録に失敗しました");
         console.error(e.message || "不明なエラー");

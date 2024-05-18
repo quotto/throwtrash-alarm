@@ -537,5 +537,57 @@ describe('DynamoDBAlarmRepository', () => {
       });
       await alarmRepository.saveAll(alarms);
     });
+    test('一部のデータで保存に失敗しても処理は正常終了すること', async () => {
+      const alarmRepository = new DynamoDBAlarmRepository({}, 'dummy_table_name');
+      const alarms = Array.from({length: 26}, (_, i) => new Alarm(new Device(`dummy_device_token_${i}`, 'ios'),new AlarmTime('0800'),new User('dummy_user_id')));
+      const first_batch_items = alarms.slice(0, 25).map((alarm) => {
+        return {
+          PutRequest: {
+            Item: {
+              device_token: alarm.device.getToken(),
+              platform: alarm.device.getPlatform(),
+              alarm_time: alarm.alarmTime.formatTimeToHHMM(),
+              user_id: alarm.user.getId(),
+              created_at: alarm.alarmHistory.created_at.toISOString()
+            }
+          }
+        };
+      });
+      const second_batch_items = alarms.slice(25).map((alarm) => {
+        return {
+          PutRequest: {
+            Item: {
+              device_token: alarm.device.getToken(),
+              platform: alarm.device.getPlatform(),
+              alarm_time: alarm.alarmTime.formatTimeToHHMM(),
+              user_id: alarm.user.getId(),
+              created_at: alarm.alarmHistory.created_at.toISOString()
+            }
+          }
+        };
+      });
+
+      ddbMock.on(libdynamodb.BatchWriteCommand, {
+        RequestItems: {
+          dummy_table_name: first_batch_items
+        }
+      }).resolves({
+        $metadata: {
+          httpStatusCode: 200
+        }
+      }).on(libdynamodb.BatchWriteCommand, {
+        RequestItems: {
+          dummy_table_name: second_batch_items
+        }
+      }).resolves({
+        $metadata: {
+          httpStatusCode: 200
+        },
+        UnprocessedItems: {
+          dummy_table_name: second_batch_items
+        }
+      });
+      await alarmRepository.saveAll(alarms);
+    });
   });
 });

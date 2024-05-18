@@ -101,6 +101,12 @@ describe('DynamoDBAlarmRepository', () => {
       const alarmRepository = new DynamoDBAlarmRepository({}, 'dummy_table_name');
       const result = await alarmRepository.listByAlarmTime(new AlarmTime('0800'));
       expect(result[0].alarmTime).toEqual(new AlarmTime('0800'));
+      expect(result[0].device.getToken()).toBe('dummy_device_token');
+      expect(result[0].device.getPlatform()).toBe('ios');
+      expect(result[0].user.getId()).toBe('dummy_user_id');
+      expect(result[0].alarmHistory.created_at.toISOString()).toBe('2022-01-01T00:00:00.000Z');
+      expect(result[0].alarmHistory.last_successful_time).toBeUndefined();
+      expect(result[0].alarmHistory.last_failed_time).toBeUndefined();
     });
     test('2件のデータ取得', async () => {
       ddbMock.on(libdynamodb.QueryCommand).resolves({
@@ -414,6 +420,31 @@ describe('DynamoDBAlarmRepository', () => {
     });
   });
   describe('saveAll', () => {
+    test('1件のデータ保存が正常に実行されること', async () => {
+      ddbMock.on(libdynamodb.BatchWriteCommand, {
+        RequestItems: {
+          dummy_table_name: [
+            {
+              PutRequest: {
+                Item: {
+                  device_token: 'dummy',
+                  platform: 'ios',
+                  alarm_time: '0800',
+                  user_id: 'dummy_user_id',
+                  created_at: '2022-02-01T00:00:00.000Z'
+                }
+              }
+            }
+          ]
+        }
+      }).resolves({
+        $metadata: {
+          httpStatusCode: 200
+        }
+      });
+      const alarmRepository = new DynamoDBAlarmRepository({}, 'dummy_table_name');
+      await alarmRepository.saveAll([new Alarm(new Device('dummy_device_token', 'ios'),new AlarmTime('0800'),new User('dummy_user_id'), new AlarmHistory(new Date('2022-02-01T00:00:00.000Z')))]);
+    });
     test('25件以下の一括保存が正常に実行されること', async () => {
       ddbMock.on(libdynamodb.BatchWriteCommand, {
         RequestItems: {
@@ -428,6 +459,17 @@ describe('DynamoDBAlarmRepository', () => {
                   created_at: '2022-01-01T00:00:00.000Z'
                 }
               }
+            },
+            {
+              PutRequest: {
+                Item: {
+                  device_token: 'dummy2',
+                  platform: 'ios',
+                  alarm_time: '0800',
+                  user_id: 'dummy_user_id2',
+                  created_at: '2022-02-01T00:00:00.000Z'
+                }
+              }
             }
           ]
         }
@@ -437,7 +479,10 @@ describe('DynamoDBAlarmRepository', () => {
         }
       });
       const alarmRepository = new DynamoDBAlarmRepository({}, 'dummy_table_name');
-      await alarmRepository.saveAll([new Alarm(new Device('dummy_device_token', 'ios'),new AlarmTime('0800'),new User('dummy_user_id'))]);
+      await alarmRepository.saveAll([
+        new Alarm(new Device('dummy_device_token', 'ios'),new AlarmTime('0800'),new User('dummy_user_id')),
+        new Alarm(new Device('dummy_device_token2', 'ios'),new AlarmTime('0800'),new User('dummy_user_id2'), new AlarmHistory(new Date('2022-02-01T00:00:00.000Z')))
+      ]);
     });
     test('26件以上の一括保存が正常に実行されること', async () => {
       const alarmRepository = new DynamoDBAlarmRepository({}, 'dummy_table_name');

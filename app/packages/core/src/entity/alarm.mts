@@ -1,27 +1,46 @@
 import { Device } from "./device.mjs";
 import { User } from "./user.mjs";
 import { AlarmTime } from "./alarm-time.mjs";
+import { AlarmHistory } from "./alarm-history.mjs";
 
 export class Alarm {
-    private device: Device;
-    private alarm_time: AlarmTime;
-    private user: User;
-    constructor(device: Device, alarm_time: AlarmTime, user: User) {
-        this.alarm_time = alarm_time;
-        this.device = device;
-        this.user = user;
+    private _device: Device;
+    private _alarm_time: AlarmTime;
+    private _user: User;
+    private _alarm_history: AlarmHistory;
+    constructor(device: Device, alarm_time: AlarmTime, user: User, alarm_history?: AlarmHistory) {
+        this._alarm_time = alarm_time;
+        this._device = device;
+        this._user = user;
+        if(!alarm_history) {
+            this._alarm_history = new AlarmHistory(new Date());
+        } else {
+            this._alarm_history = alarm_history;
+        }
     }
-    getDevice(): Device {
-        return this.device;
+    get device(): Device {
+        return this._device;
     }
-    getAlarmTime(): AlarmTime {
-        return this.alarm_time;
+    get alarmTime(): AlarmTime {
+        return this._alarm_time;
     }
-    getUser(): User {
-        return this.user;
+    get user(): User {
+        return this._user;
     }
-    updateTime(alarm_time: AlarmTime): Alarm {
-        return new Alarm(this.device, alarm_time, this.user);
+    updateAlarmTime(alarm_time: AlarmTime): Alarm {
+        return new Alarm(this._device, alarm_time, this._user, this._alarm_history);
+    }
+    success(update_time: Date): Alarm {
+        const new_alarm_history = this._alarm_history.updateLastSuccessfulTime(update_time);
+        return new Alarm(this._device, this._alarm_time, this._user, new_alarm_history);
+    }
+    failed(update_time: Date): Alarm {
+        const new_alarm_history = this._alarm_history.updateLastFailedTime(update_time);
+        return new Alarm(this._device, this._alarm_time, this._user, new_alarm_history);
+    }
+
+    get alarmHistory(): AlarmHistory {
+        return this._alarm_history;
     }
 }
 

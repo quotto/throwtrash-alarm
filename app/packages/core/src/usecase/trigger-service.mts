@@ -24,24 +24,46 @@ export const sendMessage = async (
   alarm_repository: AlarmRepository ,
   notification_sender: MessageSender,alarm_time: AlarmTime
 ) => {
-  const target_devices = await alarm_repository.listByAlarmTime(alarm_time);
-  if(target_devices.length == 0) {
+  const target_alarms = await alarm_repository.listByAlarmTime(alarm_time);
+  if(target_alarms.length == 0) {
     console.warn("この時間に登録されているデバイストークンは見つかりませんでした");
     return;
   }
   const all_send_tasks: Promise<any>[] = [];
+  const updated_alarms: Alarm[] = [];
 
-  while(target_devices.length > 0) {
-    const send_target_devices = target_devices.splice(0, MAX_SEND_DEVICES);
+  // 500台ずつ送信する
+  while(target_alarms.length > 0) {
+    const send_target_devices = target_alarms.splice(0, MAX_SEND_DEVICES);
 
-    const device_messages: DeviceMessage[] = []
-    const device_tasks: Promise<any>[] = [];
-    send_target_devices.forEach((alarm: Alarm) => {
-      device_tasks.push(new Promise(async (resolve, reject) => {
-        const trash_schedule = await trash_schedule_repository.findTrashScheduleByUserId(alarm.getUser().getId());
+    const device_messages: DeviceMessage[] = await getSendMessages(send_target_devices, trash_schedule_repository, trash_schedule_service);
+    console.log(device_messages.length);
+    if(device_messages.length == 0) {
+      const message = "ゴミ出し情報が1件も取得できませんでした";
+      console.error(message);
+      throw new Error(message);
+    }
+    all_send_tasks.push(
+      notification_sender.sendToDevices(device_messages).then((notification_results) => {
+        notification_results.forEach((notification_result, index) => {
+          notification_result.status === NotificationStatus.SUCCESS ?
+            updated_alarms.push(send_target_devices[index].success(new Date())) :
+            updated_alarms.push(send_target_devices[index].failed(new Date()));
+        });
+      })
+    );
+  }
+
+  await Promise.all(all_send_tasks);
+  await alarm_repository.saveAll(updated_alarms);
+}
+
+const getSendMessages = async (alarms: Alarm[], trash_schedule_repository: TrashScheduleRepository, trash_schedule_service: TrashScheduleService): Promise<DeviceMessage[]> => {
+  const device_messages: DeviceMessage[] = [];
+    const tasks = alarms.map(async (alarm: Alarm)  => {
+      return trash_schedule_repository.findTrashScheduleByUserId(alarm.user.getId()).then((trash_schedule) => {;
         if(trash_schedule == null) {
-          console.warn(`ユーザーIDに一致するゴミ出しスケジュールが見つかりませんでした - ユーザーID: ${alarm.getUser().getId()}`);
-          resolve(false);
+          console.warn(`ユーザーIDに一致するゴミ出しスケジュールが見つかりませんでした - ユーザーID: ${alarm.user.getId()}`);
           return;
         }
 
@@ -50,32 +72,14 @@ export const sendMessage = async (
         trash_schedule!.trashData.forEach((trash_data) => {
           const trash_type = trash_schedule_service.getEnableTrashData(trash_data, today);
           if(trash_type) {
-            console.log(trash_type)
             enable_trashes.push(trash_type.name)
           }
         });
         const message = enable_trashes.length > 0 ? enable_trashes.join(",") : "今日出せるゴミはありません";
 
-        device_messages.push(new DeviceMessage(alarm.getDevice(), message));
-        resolve(true);
-      }));
+        device_messages.push(new DeviceMessage(alarm.device, message));
+      });
     });
-
-    await Promise.all(device_tasks);
-    console.debug(device_messages);
-    if(device_messages.length == 0) {
-      const message = "ゴミ出し情報が1件も取得できませんでした";
-      console.error(message);
-      throw new Error(message);
-    }
-    all_send_tasks.push(notification_sender.sendToDevices(device_messages));
+    await Promise.all(tasks);
+    return device_messages;
   }
-
-  const result = await Promise.all(all_send_tasks);
-  result.forEach((notification_result, index) => {
-    if(notification_result.status === NotificationStatus.FAILURE) {
-      console.error(`メッセージの送信でエラーが発生しました - 対象範囲: ${index * MAX_SEND_DEVICES + 1} - ${index * MAX_SEND_DEVICES + MAX_SEND_DEVICES}`);
-      console.error(notification_result.errorMessages);
-    }
-  });
-}

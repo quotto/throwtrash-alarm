@@ -23,20 +23,6 @@ resource "aws_api_gateway_stage" "api-stage-dev" {
     }
 }
 
-resource "aws_api_gateway_stage" "api-stage-prod" {
-    rest_api_id = aws_api_gateway_rest_api.api.id
-    stage_name = "prod"
-    deployment_id = aws_api_gateway_deployment.api-deployment-prod.id
-    variables = {
-      "stageName" = "prod"
-    }
-    tags = local.tags
-
-    lifecycle {
-      ignore_changes = [ tags ]
-    }
-}
-
 resource "aws_api_gateway_resource" "api-resource-create" {
     rest_api_id = aws_api_gateway_rest_api.api.id
     parent_id = aws_api_gateway_rest_api.api.root_resource_id
@@ -131,26 +117,6 @@ resource "aws_api_gateway_deployment" "api-deployment-dev" {
     }
 }
 
-resource "aws_api_gateway_deployment" "api-deployment-prod" {
-    rest_api_id = aws_api_gateway_rest_api.api.id
-    depends_on = [
-        aws_api_gateway_integration.api-integration-create,
-        aws_api_gateway_integration.api-integration-delete,
-        aws_api_gateway_integration.api-integration-update
-    ]
-    triggers = {
-        redeployment = sha1(jsonencode([
-            aws_api_gateway_integration.api-integration-create.id,
-            aws_api_gateway_integration.api-integration-delete.id,
-            aws_api_gateway_integration.api-integration-update.id,
-            aws_api_gateway_method.api-method-post.id,
-            aws_api_gateway_method.api-method-put.id,
-            aws_api_gateway_method.api-method-delete.id,
-            aws_api_gateway_resource.api-resource-create.id
-        ]))
-    }
-}
-
 resource "aws_api_gateway_usage_plan" "usage-plan-dev" {
     name = "throwtrash-alarm-dev-plan"
     api_stages {
@@ -159,30 +125,12 @@ resource "aws_api_gateway_usage_plan" "usage-plan-dev" {
     }
 }
 
-resource "aws_api_gateway_usage_plan" "usage-plan-prod" {
-    name = "throwtrash-alarm-prod-plan"
-    api_stages {
-        api_id = aws_api_gateway_rest_api.api.id
-        stage = aws_api_gateway_stage.api-stage-prod.stage_name
-    }
-}
-
 resource "aws_api_gateway_api_key" "api-key-dev" {
     name = "throwtrash-alarm-dev-key"
-}
-
-resource "aws_api_gateway_api_key" "api-key-prod" {
-    name = "throwtrash-alarm-prod-key"
 }
 
 resource "aws_api_gateway_usage_plan_key" "api-plan-key-dev" {
     usage_plan_id = aws_api_gateway_usage_plan.usage-plan-dev.id
     key_type = "API_KEY"
     key_id = aws_api_gateway_api_key.api-key-dev.id
-}
-
-resource "aws_api_gateway_usage_plan_key" "api-plan-key-prod" {
-    usage_plan_id = aws_api_gateway_usage_plan.usage-plan-dev.id
-    key_type = "API_KEY"
-    key_id = aws_api_gateway_api_key.api-key-prod.id
 }

@@ -1,6 +1,6 @@
 import { AlarmTime } from "../entity/alarm.mjs";
 import { AlarmScheduler } from "../usecase/alarm-scheduler.mjs";
-import { ResourceNotFoundException, CreateScheduleCommand, SchedulerClient, FlexibleTimeWindowMode, SchedulerClientConfig, GetScheduleCommand } from "@aws-sdk/client-scheduler"
+import { CreateScheduleCommand, SchedulerClient, FlexibleTimeWindowMode, SchedulerClientConfig, GetScheduleCommand, ResourceNotFoundException } from "@aws-sdk/client-scheduler"
 
 export class EventBridgeAlarmScheduler implements AlarmScheduler {
     private scheduler: SchedulerClient;
@@ -50,12 +50,15 @@ export class EventBridgeAlarmScheduler implements AlarmScheduler {
                 State: "ENABLED",
                 Description: "ゴミ捨てのアラーム",
             }));
+            if(result.$metadata.httpStatusCode !== 200) {
+                throw new Error("アラームの作成に失敗しました")
+            }
             console.log(`アラームを作成しました: ${result.ScheduleArn}`)
             return true;
         } catch (e: any) {
             console.error(`アラーム${event_bridge_scheduler_name}の作成でエラーが発生しました`)
             console.error(e.message);
-            return false;
+            throw e;
         }
 
     }
@@ -67,12 +70,22 @@ export class EventBridgeAlarmScheduler implements AlarmScheduler {
                 Name: event_bridge_scheduler_name,
                 GroupName: this.group_name
             }));
-            return result.Name!;
+            if(result.$metadata.httpStatusCode !== 200) {
+                throw new Error("アラームの取得に失敗しました")
+            }
+            if (!result.Name) {
+                console.log(`アラーム${event_bridge_scheduler_name}が見つかりませんでした`);
+                return null;
+            }
+            return result.Name;
         } catch (e: any) {
             if (e instanceof ResourceNotFoundException) {
                 console.log(`アラーム${event_bridge_scheduler_name}が見つかりませんでした`);
+                return null;
             }
-            return null;
+            console.error(`アラーム${event_bridge_scheduler_name}の取得でエラーが発生しました`)
+            console.error(e.message);
+            throw e;
         }
     }
 }

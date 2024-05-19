@@ -7,5 +7,7 @@ export enum NotificationStatus {
 
 export type NotificationResult = {
     status: NotificationStatus;
-    errorMessages: DeviceMessage[];
-} 
+    deviceToken: string;
+    sendMessage: string;
+    errorMessage?: string;
+}

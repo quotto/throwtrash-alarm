@@ -1,0 +1,84 @@
+# releaseブランチに対するPullRequest発行時にTerraformPlanの結果をプルリクエストのコメントに追加する
+
+name: Plan
+on:
+  pull_request:
+    branches:
+      - release
+    # PR作成後のプッシュで実行されるようにsynchronizeも指定
+    types: [opened, synchronize]
+permissions:
+  id-token: write
+  contents: read
+  issues: write
+  pull-requests: write
+jobs:
+  set-stage:
+    runs-on: ubuntu-latest
+    outputs:
+      STAGE: ${{ steps.set-stage.outputs.STAGE }}
+    steps:
+      - name: Set stage
+        id: set-stage
+        run: |
+          if [ ${{ github.event_name }} == "pull_request" -o ${{ github.ref }} == "refs/heads/release" ]; then
+            echo "STAGE=prod" >> $GITHUB_OUTPUT
+          else
+            echo "STAGE=dev" >> $GITHUB_OUTPUT
+          fi
+  plan:
+    needs:
+      - set-stage
+    environment: ${{ needs.set-stage.outputs.STAGE }}
+    env:
+      name: ${{ needs.set-stage.outputs.STAGE }}
+    runs-on: ubuntu-latest
+    steps:
+    - name: Configure aws credentials
+      uses: aws-actions/configure-aws-credentials@v3
+      id: configure-aws-credentials
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+        role-session-name: GitHubActions
+        aws-region: ${{ vars.AWS_REGION }}
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+      with:
+          node-version: '20.x'
+    - name: Install Dependencies
+      working-directory:  ./app
+      run: npm install -ws
+    - name: Restore firebase credentials
+      run: echo ${{ secrets.FIREBASE_CREDENTIALS }} | base64 -d > ./app/packages/trigger/firebase-config.json
+    - name: Clear and CI Install
+      working-directory:  ./app
+      run: |
+          rm -rf node_modules
+          npm ci --ws
+          npm run build
+    - name: Terraform Init
+      working-directory: ./infra
+      run: terraform init -backend-config="bucket=throwtrash-tfstate-${{env.name}}"
+    - name: Terraform Plan
+      working-directory: ./infra
+      id: plan
+      run: |
+        {
+          echo 'plan_out<<EOF'
+          terraform plan -var=trash_schedule_table_name=TrashSchedule -var=environment=${{env.name}} -var=certificate_arn=${{ secrets.CERTIFICATE_ARN }} -var=zone_id=${{ secrets.ZONE_ID }} -var="api_gateway_custom_domain=${{ secrets.API_GATEWAY_CUSTOM_DOMAIN }}" -var="shared_trash_schedule_table_name=throwtrash-shared-schedule" -no-color
+          echo EOF
+        } >> "$GITHUB_OUTPUT"
+    - name: Comment PR
+      uses: actions/github-script@v3
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const output = `#### Terraform Plan 📖\n\`\`\`${{ steps.plan.outputs.plan_out }}\`\`\``;
+          github.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: output
+          })

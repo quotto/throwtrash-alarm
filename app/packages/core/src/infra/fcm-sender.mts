@@ -33,6 +33,7 @@ export class FcmSender implements MessageSender {
             errorMessage: resp.error?.message || "不明なエラー"
           }
         } else {
+          console.info(`メッセージの送信に成功しました - ${deviceMessages[index].device.getToken()}`);
           return {
             status: NotificationStatus.SUCCESS,
             deviceToken: deviceMessages[index].device.getToken(),

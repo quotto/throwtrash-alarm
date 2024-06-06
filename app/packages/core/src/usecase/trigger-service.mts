@@ -78,6 +78,10 @@ const getSendMessages = async (alarms: Alarm[], trash_schedule_repository: Trash
         const message = enable_trashes.length > 0 ? enable_trashes.join(",") : "今日出せるゴミはありません";
 
         device_messages.push(new DeviceMessage(alarm.device, message));
+      }).catch((e)=>{
+        console.error(`ゴミ出しスケジュールの取得でエラーが発生しました - ユーザーID: ${alarm.user.getId()}`);
+        console.error(e.message || "不明なエラー");
+        return;
       });
     });
     await Promise.all(tasks);

@@ -517,4 +517,56 @@ describe('sendMessage', () => {
       expect(alarm.alarmHistory.last_failed_time).toBeUndefined();
     });
   });
+  test('送信対象が複数の場合にスケジュールの取得に失敗した場合でも、他のデバイスに対してはメッセージを送信する', async () => {
+    const trash_schedule_repository: TrashScheduleRepository = {
+      findTrashScheduleByUserId: jest.fn(async(user_id: string) => {
+        if(user_id === "test1") {
+          return {
+            trashData: [
+              {
+                type: "burn",
+                schedules: [
+                  {
+                    type: "weekday",
+                    value: "0"
+                  }
+                ]
+              }
+            ]
+          } as TrashSchedule
+        } else {
+          throw new Error("findTrashScheduleByUserId error");
+        }
+      })
+    };
+    const alarm_repository: AlarmRepository = {
+      save: jest.fn().mockReturnValue(true) as any,
+      saveAll: jest.fn() as any,
+      delete: function (alarm: Alarm): Promise<boolean> {
+        throw new Error('Function not implemented.');
+      },
+      findByDeviceToken: function (deviceToken: string): Promise<Alarm | null> {
+        throw new Error('Function not implemented.');
+      },
+      listByAlarmTime: jest.fn().mockReturnValue([
+        new Alarm(new Device("device1", "ios"), new AlarmTime({hour: 0, minute: 0}), new User("test1")),
+        new Alarm(new Device("device2", "ios"), new AlarmTime({hour: 0, minute: 0}), new User("test2"))
+      ]) as any
+    };
+    const message_sender: MessageSender = {
+      sendToDevices: jest.fn(async(deviceMessages: DeviceMessage[]) => (
+        deviceMessages.map((deviceMessage) => (
+          {
+            status: NotificationStatus.SUCCESS,
+            deviceToken: deviceMessage.device.getToken(),
+            sendMessage: deviceMessage.message
+          }
+        ))
+      ))
+    };
+    await sendMessage(trash_schedule_repository, alarm_repository, message_sender, new AlarmTime("0000"));
+
+    expect(message_sender.sendToDevices).toBeCalledWith([
+      new DeviceMessage(new Device("device1", "ios"), "もえるゴミ")]);
+  });
 });

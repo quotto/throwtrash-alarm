@@ -1,3 +1,4 @@
+import logger from "../infra/logger.mjs";
 import { ArgumentError } from "./argument-error.mjs";
 
 export type NumericTime = {
@@ -22,7 +23,7 @@ export class AlarmTime {
                 const minute = parseInt(alarm_time.slice(2, 4));
                 return new AlarmTime({ hour: hour, minute: minute });
             } catch (e: any) {
-                console.error(e.message)
+                logger.error('alarm-time', 'constructor', e.message, { error: e });
                 throw new ArgumentError("アラームの時間が不正です");
             }
         } else {

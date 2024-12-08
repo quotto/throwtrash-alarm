@@ -10,10 +10,12 @@
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.529.1",
     "@aws-sdk/client-scheduler": "^3.529.1",
+    "@aws-sdk/client-sqs": "^3.734.0",
     "@aws-sdk/lib-dynamodb": "^3.529.1"
   },
   "devDependencies": {
     "@shelf/jest-dynamodb": "^3.4.4",
+    "@types/aws-lambda": "^8.10.147",
     "@types/jest": "^29.5.12",
     "aws-sdk-client-mock": "^4.0.0",
     "aws-sdk-client-mock-jest": "^4.0.0",
@@ -25,6 +27,7 @@
   "exports": {
     "./entity/*": "./dist/entity/*",
     "./usecase/*": "./dist/usecase/*",
-    "./infra/*": "./dist/infra/*"
+    "./infra/*": "./dist/infra/*",
+    "./data/*": "./dist/data/*"
   }
 }

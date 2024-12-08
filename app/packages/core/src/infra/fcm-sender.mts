@@ -3,6 +3,7 @@ import { App } from "firebase-admin/app";
 import { getMessaging } from "firebase-admin/messaging";
 import { DeviceMessage } from "../entity/device-message.mjs";
 import { NotificationResult, NotificationStatus } from "../entity/notification-result.mjs";
+import logger from "./logger.mjs";
 
 export class FcmSender implements MessageSender {
   private app: App;
@@ -10,7 +11,7 @@ export class FcmSender implements MessageSender {
     this.app = app;
   }
   async sendToDevices(deviceMessages: DeviceMessage[]): Promise<NotificationResult[]> {
-    console.debug(deviceMessages);
+    logger.debug('fcm-sender', 'sendToDevices', 'メッセージ送信を開始します', {data: deviceMessages});
     const messaging = getMessaging(this.app);
     try {
       const responses = await messaging.sendEach(deviceMessages.map((deviceMessage) => {
@@ -24,8 +25,7 @@ export class FcmSender implements MessageSender {
       }));
       return responses.responses.map((resp, index) => {
         if(!resp.success) {
-          console.error(`メッセージの送信に失敗しました - ${deviceMessages[index].device.getToken()}, メッセージID: ${resp.messageId}`)
-          console.error(resp.error?.toJSON());
+          logger.error('fcm-sender', 'sendToDevices', 'メッセージの送信に失敗しました', {data: deviceMessages[index].device, error: resp.error});
           return {
             status: NotificationStatus.FAILURE,
             deviceToken: deviceMessages[index].device.getToken(),
@@ -33,7 +33,7 @@ export class FcmSender implements MessageSender {
             errorMessage: resp.error?.message || "不明なエラー"
           }
         } else {
-          console.info(`メッセージの送信に成功しました - ${deviceMessages[index].device.getToken()}`);
+          logger.debug('fcm-sender', 'sendToDevices', 'メッセージの送信に成功しました', {data: deviceMessages[index].device, messageId: resp.messageId});
           return {
             status: NotificationStatus.SUCCESS,
             deviceToken: deviceMessages[index].device.getToken(),
@@ -42,11 +42,6 @@ export class FcmSender implements MessageSender {
         }
       });
     } catch(e: any) {
-      console.error("メッセージの送信でエラーが発生しました");
-      console.error(e.message || "不明なエラー")
-      if(e instanceof Error) {
-        console.error(e.stack);
-      }
       throw e;
     }
   }

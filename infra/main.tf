@@ -45,6 +45,16 @@ module "alarm-trigger" {
   shared_trash_schedule_table_name = var.shared_trash_schedule_table_name
   layer_arn = module.layer.layer_arn
   environment = var.environment
+  delete-failed-alarms-sqs-url = module.delete-failed-alarms.sqs_url
+  delete-failed-alarms-sqs-arn = module.delete-failed-alarms.sqs_arn
+}
+
+module "delete-failed-alarms" {
+  source = "./delete-failed-alarms"
+  alarm_table_arn = module.api.alarm_table_arn
+  alarm_table_name = module.api.alarm_table_name
+  layer_arn = module.layer.layer_arn
+  environment = var.environment
 }
 
 module "api-gateway-prod-stage" {

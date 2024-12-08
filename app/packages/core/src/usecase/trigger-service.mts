@@ -6,6 +6,7 @@ import { AlarmTime } from "../entity/alarm-time.mjs";
 import { DeviceMessage } from "../entity/device-message.mjs";
 import { DBAdapter, TextCreator, TrashSchedule, TrashScheduleService } from "trash-common";
 import { NotificationStatus } from "../entity/notification-result.mjs";
+import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
 
 const MAX_SEND_DEVICES = 500;
 class DBAdapterImple implements DBAdapter {
@@ -45,10 +46,13 @@ export const sendMessage = async (
     }
     all_send_tasks.push(
       notification_sender.sendToDevices(device_messages).then((notification_results) => {
-        notification_results.forEach((notification_result, index) => {
-          notification_result.status === NotificationStatus.SUCCESS ?
-            updated_alarms.push(send_target_devices[index].success(new Date())) :
+        notification_results.forEach(async (notification_result, index) => {
+          if (notification_result.status === NotificationStatus.SUCCESS) {
+            updated_alarms.push(send_target_devices[index].success(new Date()));
+          } else {
             updated_alarms.push(send_target_devices[index].failed(new Date()));
+            await sendDeleteMessage(send_target_devices[index], new Date());
+          }
         });
       })
     );
@@ -83,3 +87,37 @@ const getSendMessages = async (alarms: Alarm[], trash_schedule_repository: Trash
     await Promise.all(tasks);
     return device_messages;
   }
+
+const sendDeleteMessage = async (alarm: Alarm, newestFailedTime: Date) => {
+  const sqsClient = new SQSClient({ region: "ap-northeast-1" });
+  const queueUrl = process.env.ALARM_DELETE_QUEUE_URL;
+
+  if (!queueUrl) {
+    throw new Error("ALARM_DELETE_QUEUE_URLが設定されていません");
+  }
+
+  const messageBody = JSON.stringify({
+    alarm: {
+      device_token: alarm.device.getToken(),
+      alarm_time: alarm.alarmTime.formatTimeToHHMM(),
+      user_id: alarm.user.getId(),
+      platform: alarm.device.getPlatform(),
+      created_at: alarm.alarmHistory.created_at.toISOString(),
+      last_successful_time: alarm.alarmHistory.last_successful_time?.toISOString(),
+      last_failed_time: alarm.alarmHistory.last_failed_time?.toISOString()
+    },
+    newest_failed_time: newestFailedTime.toISOString()
+  });
+
+  const command = new SendMessageCommand({
+    QueueUrl: queueUrl,
+    MessageBody: messageBody
+  });
+
+  try {
+    await sqsClient.send(command);
+    console.log("SQSメッセージを送信しました");
+  } catch (error) {
+    console.error("SQSメッセージの送信に失敗しました", error);
+  }
+}

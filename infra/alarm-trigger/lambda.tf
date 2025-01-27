@@ -16,6 +16,8 @@ resource "aws_lambda_function" "throwtrash-alarm-trigger-lambda" {
     layers = [ var.layer_arn ]
 
     publish = var.environment == "prod"
+    timeout = 300
+
 
     environment {
         variables = {
@@ -32,6 +34,12 @@ resource "aws_lambda_function" "throwtrash-alarm-trigger-lambda" {
         log_group = aws_cloudwatch_log_group.throwtrash-alarm-trigger-log-group.name
     }
     tags = local.tags
+}
+
+resource "aws_lambda_function_event_invoke_config" "throwtrash-alarm-trigger-lambda-event-invoke-config" {
+  function_name                = aws_lambda_function.throwtrash-alarm-trigger-lambda.function_name
+  maximum_event_age_in_seconds = 60
+  maximum_retry_attempts       = 0
 }
 
 resource "aws_lambda_alias" "throwtrash-trigger-dev" {

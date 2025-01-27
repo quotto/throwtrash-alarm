@@ -17,3 +17,9 @@ variable "environment" {
   type        = string
   default = "dev"
 }
+variable "delete-failed-alarms-sqs-arn" {
+  type        = string
+}
+variable "delete-failed-alarms-sqs-url" {
+  type        = string
+}

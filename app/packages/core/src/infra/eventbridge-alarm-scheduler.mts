@@ -1,6 +1,7 @@
 import { AlarmTime } from "../entity/alarm.mjs";
 import { AlarmScheduler } from "../usecase/alarm-scheduler.mjs";
 import { CreateScheduleCommand, SchedulerClient, FlexibleTimeWindowMode, SchedulerClientConfig, GetScheduleCommand, ResourceNotFoundException } from "@aws-sdk/client-scheduler"
+import logger from "./logger.mjs";
 
 export class EventBridgeAlarmScheduler implements AlarmScheduler {
     private scheduler: SchedulerClient;
@@ -51,13 +52,13 @@ export class EventBridgeAlarmScheduler implements AlarmScheduler {
                 Description: "ゴミ捨てのアラーム",
             }));
             if(result.$metadata.httpStatusCode !== 200) {
+                logger.error('eventbridge-alarm-scheduler', 'create', 'アラームの作成に失敗しました', {error: result});
                 throw new Error("アラームの作成に失敗しました")
             }
-            console.log(`アラームを作成しました: ${result.ScheduleArn}`)
+            logger.info('eventbridge-alarm-scheduler', 'create', 'アラームを作成しました', {resource: result});
             return true;
         } catch (e: any) {
-            console.error(`アラーム${event_bridge_scheduler_name}の作成でエラーが発生しました`)
-            console.error(e.message);
+            logger.error('eventbridge-alarm-scheduler', 'create', 'アラームの作成でエラーが発生しました', {error: e});
             throw e;
         }
 
@@ -71,20 +72,20 @@ export class EventBridgeAlarmScheduler implements AlarmScheduler {
                 GroupName: this.group_name
             }));
             if(result.$metadata.httpStatusCode !== 200) {
+                logger.error('eventbridge-alarm-scheduler', 'findByTime', 'アラームの取得に失敗しました', {error: result});
                 throw new Error("アラームの取得に失敗しました")
             }
             if (!result.Name) {
-                console.log(`アラーム${event_bridge_scheduler_name}が見つかりませんでした`);
+                logger.info('eventbridge-alarm-scheduler', 'findByTime', 'アラームが見つかりませんでした', {scheduler_name: event_bridge_scheduler_name});
                 return null;
             }
             return result.Name;
         } catch (e: any) {
             if (e instanceof ResourceNotFoundException) {
-                console.log(`アラーム${event_bridge_scheduler_name}が見つかりませんでした`);
+                logger.error('eventbridge-alarm-scheduler', 'findByTime', 'アラームが見つかりませんでした', {scheduler_name: event_bridge_scheduler_name});
                 return null;
             }
-            console.error(`アラーム${event_bridge_scheduler_name}の取得でエラーが発生しました`)
-            console.error(e.message);
+            logger.error('eventbridge-alarm-scheduler', 'findByTime', 'アラームの取得でエラーが発生しました', {scheduler_name: event_bridge_scheduler_name, error: e});
             throw e;
         }
     }

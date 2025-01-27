@@ -42,20 +42,25 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '20.x'
-      - name: Install Dependencies
-        working-directory:  ./app
-        run: npm install -ws
-      - name: Test
-        working-directory:  ./app
-        run: npm run test -w @shared/core
       - name: Restore firebase credentials
         run: echo -n ${{ secrets.FIREBASE_CREDENTIALS }} | base64 -d > ./app/packages/trigger/firebase-config.json
-      - name: Clear and CI Install
+      - name: CI and Build
+        working-directory:  ./app
+        run: |
+          npm ci --ws
+          npm run build
+      - name: Test
+        working-directory:  ./app
+        run: |
+          npm run test -w @shared/core
+          npm run test -w @maintain/delete-failed-alarms
+      - name: Extract libs
         working-directory:  ./app
         run: |
           rm -rf node_modules
-          npm ci --ws
-          npm run build
+          npm ci --omit=dev --ws
+          npm run libs
+      - uses: hashicorp/setup-terraform@v3
       - name: Terraform Init
         working-directory: ./infra
         run: terraform init -backend-config="bucket=throwtrash-tfstate-${{ env.name }}"

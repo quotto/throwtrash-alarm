@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "npm run build -w @shared/core && npm run build -w @function/create -w @function/update -w @function/delete -w @function/trigger && mkdir -p ./build/nodejs && cp -Lr ./node_modules ./build/nodejs && rm -r ./build/nodejs/node_modules/@function"
+    "build": "npm run build -w @shared/core && npm run build -w @function/create -w @function/update -w @function/delete -w @function/trigger -w @maintain/delete-failed-alarms",
+    "libs": "mkdir -p ./build/nodejs && cp -Lr ./node_modules ./build/nodejs && rm -r ./build/nodejs/node_modules/@function && rm -r ./build/nodejs/node_modules/@maintain"
   },
   "author": "",
   "license": "Apache-2.0",
@@ -14,7 +15,8 @@
     "packages/api/delete",
     "packages/api/update",
     "packages/trigger",
-    "packages/core"
+    "packages/core",
+    "packages/maintain/delete-failed-alarms"
   ],
   "devDependencies": {
     "@types/aws-lambda": "^8.10.136"

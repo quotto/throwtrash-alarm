@@ -42,6 +42,8 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '20.x'
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
       - name: Install Dependencies
         working-directory:  ./app
         run: npm install -ws

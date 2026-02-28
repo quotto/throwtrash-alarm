@@ -1,7 +1,4 @@
 import { jest, describe, test, expect } from '@jest/globals';
-import { sendMessage } from '../../src/usecase/trigger-service.mjs';
-import { TrashSchedule } from 'trash-common';
-import { TrashScheduleRepository } from '../../src/usecase/trash-schedule-repository.mjs';
 import { AlarmRepository } from '../../src/usecase/alarm-repository.mjs';
 import { AlarmTime } from '../../src/entity/alarm-time.mjs';
 import { Alarm } from '../../src/entity/alarm.mjs';
@@ -11,6 +8,51 @@ import { MessageSender } from '../../src/usecase/message-sender.mjs';
 import { NotificationResult, NotificationStatus } from '../../src/entity/notification-result.mjs';
 import { DeviceMessage } from '../../src/entity/device-message.mjs';
 import { AlarmHistory } from '../../src/entity/alarm-history.mjs';
+
+type TrashScheduleRepository = any;
+
+type TrashSchedule = {
+  trashData: Array<{
+    type: string;
+    trash_val?: string;
+    schedules: Array<{
+      type: string;
+      value: string;
+    }>;
+  }>;
+};
+
+jest.unstable_mockModule('trash-common', () => {
+  const getTrashName = (trashData: { type: string; trash_val?: string }) => {
+    if (trashData.type === 'burn') return 'もえるゴミ';
+    if (trashData.type === 'plastic') return 'プラスチック';
+    if (trashData.type === 'other') return trashData.trash_val || 'その他';
+    return trashData.type;
+  };
+
+  class DBAdapter {}
+  class TextCreator {
+    constructor(_locale: string) {}
+  }
+  class TrashScheduleService {
+    constructor(_timezone: string, _textCreator: unknown, _dbAdapter: unknown) {}
+    calculateLocalTime(offset: number): Date {
+      const base = new Date(Date.now());
+      base.setUTCDate(base.getUTCDate() + offset);
+      return base;
+    }
+    getEnableTrashData(trashData: { type: string; trash_val?: string; schedules: Array<{ type: string; value: string }> }, targetDate: Date) {
+      const weekday = targetDate.getUTCDay().toString();
+      const enabled = trashData.schedules.some((s) => s.type === 'weekday' && s.value === weekday);
+      if (!enabled) return null;
+      return { name: getTrashName(trashData) };
+    }
+  }
+
+  return { DBAdapter, TextCreator, TrashScheduleService };
+});
+
+const { sendMessage } = await import('../../src/usecase/trigger-service.mjs');
 
 describe('sendMessage', () => {
   const date_constructor = global.Date;
@@ -120,8 +162,7 @@ describe('sendMessage', () => {
         throw new Error('Function not implemented.');
       },
       listByAlarmTime: jest.fn().mockReturnValue([
-        new Alarm(new Device("aiueo", "ios"), new AlarmTime({hour: 0, minute: 0}), new User("test"),
-        new AlarmHistory(new Date("2024-02-17T00:00:00.000Z"), {last_successful_time: new Date("2024-02-18T00:00:00.000Z")}))
+        new Alarm(new Device("aiueo", "ios"), new AlarmTime({hour: 0, minute: 0}), new User("test"), false, new AlarmHistory(new Date("2024-02-17T00:00:00.000Z"), {last_successful_time: new Date("2024-02-18T00:00:00.000Z")}))
       ]) as any
     };
     const message_sender: MessageSender = {
@@ -189,7 +230,7 @@ describe('sendMessage', () => {
         throw new Error('Function not implemented.');
       },
       listByAlarmTime: jest.fn().mockReturnValue([
-        new Alarm(new Device("aiueo", "ios"), new AlarmTime({hour: 23, minute: 59}), new User("test"), new AlarmHistory(new Date("2024-02-17T00:00:00.000Z"), {last_successful_time: new Date("2024-02-18T00:00:00.000Z"), last_failed_time: new Date("2024-02-19T00:00:00.000Z")}))
+        new Alarm(new Device("aiueo", "ios"), new AlarmTime({hour: 23, minute: 59}), new User("test"), false, new AlarmHistory(new Date("2024-02-17T00:00:00.000Z"), {last_successful_time: new Date("2024-02-18T00:00:00.000Z"), last_failed_time: new Date("2024-02-19T00:00:00.000Z")}))
       ]) as any
     };
     const message_sender: MessageSender = {
@@ -276,8 +317,8 @@ describe('sendMessage', () => {
         throw new Error('Function not implemented.');
       },
       listByAlarmTime: jest.fn().mockReturnValue([
-        new Alarm(new Device("aiueo", "ios"), new AlarmTime({hour: 0, minute: 0}), new User("test1"), new AlarmHistory(new Date("2024-02-17T00:00:00.000Z"), {last_successful_time: new Date("2024-02-18T00:00:00.000Z"), last_failed_time: new Date("2024-02-19T00:00:00.000Z")})),
-        new Alarm(new Device("kakikukeko", "ios"), new AlarmTime({hour: 0, minute: 0}), new User("test2"), new AlarmHistory(new Date("2024-02-17T23:00:00.000Z")))
+        new Alarm(new Device("aiueo", "ios"), new AlarmTime({hour: 0, minute: 0}), new User("test1"), false, new AlarmHistory(new Date("2024-02-17T00:00:00.000Z"), {last_successful_time: new Date("2024-02-18T00:00:00.000Z"), last_failed_time: new Date("2024-02-19T00:00:00.000Z")})),
+        new Alarm(new Device("kakikukeko", "ios"), new AlarmTime({hour: 0, minute: 0}), new User("test2"), false, new AlarmHistory(new Date("2024-02-17T23:00:00.000Z")))
       ]) as any
     };
     const message_sender: MessageSender = {
@@ -470,7 +511,7 @@ describe('sendMessage', () => {
         throw new Error('Function not implemented.');
       },
       listByAlarmTime: jest.fn().mockReturnValue(
-        test_user_ids.map((user_id) => new Alarm(new Device(`device_${user_id}`, "ios"), new AlarmTime({hour: 12, minute: 1}), new User(user_id), new AlarmHistory(new Date("2024-02-17T00:00:00.000Z"))))
+        test_user_ids.map((user_id) => new Alarm(new Device(`device_${user_id}`, "ios"), new AlarmTime({hour: 12, minute: 1}), new User(user_id), false, new AlarmHistory(new Date("2024-02-17T00:00:00.000Z"))))
       ) as any
     };
     const message_sender: MessageSender = {
@@ -568,5 +609,53 @@ describe('sendMessage', () => {
 
     expect(message_sender.sendToDevices).toBeCalledWith([
       new DeviceMessage(new Device("device1", "ios"), "もえるゴミ")]);
+  });
+  test('翌日通知フラグが有効な場合は翌日基準で判定しタイトルを明日出せるゴミにする', async () => {
+    const trash_schedule_repository: TrashScheduleRepository = {
+      findTrashScheduleByUserId: jest.fn(async (_user_id: string) => (
+        {
+          trashData: [
+            {
+              type: "burn",
+              schedules: [
+                {
+                  type: "weekday",
+                  value: "1"
+                }
+              ]
+            }
+          ]
+        } as TrashSchedule
+      ))
+    };
+    const alarm_repository: AlarmRepository = {
+      save: jest.fn().mockReturnValue(true) as any,
+      saveAll: jest.fn() as any,
+      delete: function (alarm: Alarm): Promise<boolean> {
+        throw new Error('Function not implemented.');
+      },
+      findByDeviceToken: function (deviceToken: string): Promise<Alarm | null> {
+        throw new Error('Function not implemented.');
+      },
+      listByAlarmTime: jest.fn().mockReturnValue([
+        new Alarm(new Device("device1", "ios"), new AlarmTime({hour: 0, minute: 0}), new User("test1"), true)
+      ]) as any
+    };
+    const message_sender: MessageSender = {
+      sendToDevices: jest.fn(async(deviceMessages: DeviceMessage[]) => (
+        deviceMessages.map((deviceMessage) => (
+          {
+            status: NotificationStatus.SUCCESS,
+            deviceToken: deviceMessage.device.getToken(),
+            sendMessage: deviceMessage.message
+          }
+        ))
+      ))
+    };
+    await sendMessage(trash_schedule_repository, alarm_repository, message_sender, new AlarmTime("0000"));
+
+    expect(message_sender.sendToDevices).toBeCalledWith([
+      new DeviceMessage(new Device("device1", "ios"), "もえるゴミ", "明日出せるゴミ")
+    ]);
   });
 });

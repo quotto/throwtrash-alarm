@@ -1,6 +1,7 @@
 import { jest } from '@jest/globals';
 import type { App } from 'firebase-admin/app';
 import type { Message, TokenMessage, SendResponse } from 'firebase-admin/messaging';
+let capturedMessages: TokenMessage[] = [];
 jest.unstable_mockModule('firebase-admin/app', () => {
   return {
     initializeApp: jest.fn(() => {
@@ -18,6 +19,7 @@ jest.unstable_mockModule('firebase-admin/messaging', () => {
     getMessaging: jest.fn((app: App) => {
       return {
             sendEach: jest.fn((_message: TokenMessage[], _dryRun?: boolean) => {
+              capturedMessages = _message;
               const responses: SendResponse[] = [];
               let failureCount = 0;
               let successCount = 0;
@@ -50,6 +52,7 @@ describe('FcmSender', () => {
     beforeEach(() => {
       jest.clearAllMocks();
       jest.mock('firebase-admin');
+      capturedMessages = [];
     });
     test('1件のメッセージが正常に送信できること', async () => {
       const sender = new FcmSender(initializeApp());
@@ -143,6 +146,16 @@ describe('FcmSender', () => {
         new DeviceMessage(new Device('test-token2', 'ios'), 'test-message2'),
       ];
       await expect(async() => await sender.sendToDevices(deviceMessages)).rejects.toEqual(new Error('error-message'));
+    });
+    test('DeviceMessageのtitleが通知タイトルとして送信されること', async () => {
+      const sender = new FcmSender(initializeApp());
+      const deviceMessages: DeviceMessage[] = [
+        new DeviceMessage(new Device('test-token', 'ios'), 'test-message', '明日出せるゴミ'),
+      ];
+      await sender.sendToDevices(deviceMessages);
+      expect(capturedMessages.length).toBe(1);
+      expect(capturedMessages[0].notification?.title).toBe('明日出せるゴミ');
+      expect(capturedMessages[0].notification?.body).toBe('test-message');
     });
   });
 });

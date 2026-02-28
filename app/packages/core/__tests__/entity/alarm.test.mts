@@ -25,7 +25,7 @@ describe('Alarm', () => {
             const user = new User('userId');
             const alarm_time = new AlarmTime({hour: 12, minute:0});
             const created_at = new Date('2021-01-01T00:00:00Z');
-            const alarm = new Alarm(device, alarm_time, user, new AlarmHistory(created_at));
+            const alarm = new Alarm(device, alarm_time, user, false, new AlarmHistory(created_at));
             expect(alarm.device).toEqual(device);
             expect(alarm.alarmTime).toEqual(alarm_time);
             expect(alarm.user).toEqual(user);
@@ -38,13 +38,21 @@ describe('Alarm', () => {
             const created_at = new Date('2021-01-01T00:00:00Z');
             const last_successful_time = new Date('2021-01-01T00:00:00Z');
             const last_failed_time = new Date('2021-01-01T00:00:00Z');
-            const alarm = new Alarm(device, alarm_time, user, new AlarmHistory(created_at, {last_successful_time, last_failed_time}));
+            const alarm = new Alarm(device, alarm_time, user, false, new AlarmHistory(created_at, {last_successful_time, last_failed_time}));
             expect(alarm.device).toEqual(device);
             expect(alarm.alarmTime).toEqual(alarm_time);
             expect(alarm.user).toEqual(user);
             expect(alarm.alarmHistory.created_at.toISOString()).toEqual(created_at.toISOString());
             expect(alarm.alarmHistory.last_failed_time?.toISOString()).toEqual(last_successful_time.toISOString());
             expect(alarm.alarmHistory.last_failed_time?.toISOString()).toEqual(last_failed_time.toISOString());
+        });
+        test('翌日通知フラグが未指定の場合falseになる', () => {
+            const alarm = new Alarm(new Device('deviceToken', 'ios'), new AlarmTime({hour: 12, minute:0}), new User('userId'));
+            expect(alarm.nextDayNotificationEnabled).toBe(false);
+        });
+        test('翌日通知フラグが指定された場合その値を保持する', () => {
+            const alarm = new Alarm(new Device('deviceToken', 'ios'), new AlarmTime({hour: 12, minute:0}), new User('userId'), true);
+            expect(alarm.nextDayNotificationEnabled).toBe(true);
         });
     });
     describe('updateAlarmTime', () => {
@@ -59,6 +67,18 @@ describe('Alarm', () => {
             expect(updated_alarm.alarmTime).toEqual(new_alarm_time);
             expect(updated_alarm.user).toEqual(user);
             expect(updated_alarm.alarmHistory.created_at.toISOString()).toEqual('2022-01-01T00:00:00.000Z');
+        });
+    });
+    describe('updateNextDayNotificationEnabled', () => {
+        test('翌日通知フラグのみ更新されること', () => {
+            const device = new Device('deviceToken', 'ios');
+            const user = new User('userId');
+            const alarm = new Alarm(device, new AlarmTime({hour: 12, minute:0}), user, false);
+            const updated_alarm = alarm.updateNextDayNotificationEnabled(true);
+            expect(updated_alarm.nextDayNotificationEnabled).toBe(true);
+            expect(updated_alarm.device).toEqual(device);
+            expect(updated_alarm.user).toEqual(user);
+            expect(updated_alarm.alarmTime).toEqual(new AlarmTime({hour: 12, minute:0}));
         });
     });
     describe('success', () => {

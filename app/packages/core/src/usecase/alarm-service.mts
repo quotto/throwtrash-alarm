@@ -25,8 +25,16 @@ export class DeleteError extends Error {
     }
 }
 
-export const registerAlarm = async (alarm_repository: AlarmRepository, alarm_trigger_connector: AlarmScheduler,deviceToken: string, alarm_time: AlarmTime, userId: string, platform: string) => {
-    const new_alarm = new Alarm(new Device(deviceToken, platform), alarm_time,new User(userId))
+export const registerAlarm = async (
+    alarm_repository: AlarmRepository,
+    alarm_trigger_connector: AlarmScheduler,
+    deviceToken: string,
+    alarm_time: AlarmTime,
+    userId: string,
+    platform: string,
+    next_day_notification_enabled?: boolean
+) => {
+    const new_alarm = new Alarm(new Device(deviceToken, platform), alarm_time, new User(userId), next_day_notification_enabled)
     if(await alarm_trigger_connector.findByTime(new_alarm.alarmTime) === null) {
         if(!await alarm_trigger_connector.create(new_alarm.alarmTime)) {
             throw new RegisterError("アラームの作成に失敗しました");
@@ -37,13 +45,21 @@ export const registerAlarm = async (alarm_repository: AlarmRepository, alarm_tri
     }
 }
 
-export const updateAlarm = async (alarm_repository: AlarmRepository, alarm_trigger_connector: AlarmScheduler,device_token: string, alarm_time: AlarmTime) => {
+export const updateAlarm = async (
+    alarm_repository: AlarmRepository,
+    alarm_trigger_connector: AlarmScheduler,
+    device_token: string,
+    alarm_time: AlarmTime,
+    next_day_notification_enabled?: boolean
+) => {
     if(device_token === "") {
         throw new UpdateError("デバイストークンが指定されていません");
     }
     const alarm = await alarm_repository.findByDeviceToken(device_token);
     if(alarm) {
-        const updatedAlarm = alarm.updateAlarmTime(alarm_time);
+        const updatedAlarm = alarm
+            .updateAlarmTime(alarm_time)
+            .updateNextDayNotificationEnabled(next_day_notification_enabled ?? alarm.nextDayNotificationEnabled);
         if(await alarm_trigger_connector.findByTime(updatedAlarm.alarmTime) === null) {
             if(!await alarm_trigger_connector.create(updatedAlarm.alarmTime)) {
                 throw new UpdateError("アラームトリガーの作成に失敗しました");

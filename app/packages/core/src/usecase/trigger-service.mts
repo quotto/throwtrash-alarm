@@ -18,6 +18,8 @@ class DBAdapterImple implements DBAdapter {
 }
 const text_creator = new TextCreator("ja-JP");
 const trash_schedule_service = new TrashScheduleService("Asia/Tokyo", text_creator,new DBAdapterImple());
+const TOMORROW_TITLE = "明日出せるゴミ";
+const TODAY_TITLE = "今日のゴミ出し";
 
 export const sendMessage = async (
   trash_schedule_repository: TrashScheduleRepository,
@@ -67,17 +69,23 @@ const getSendMessages = async (alarms: Alarm[], trash_schedule_repository: Trash
           return;
         }
 
-        const today = trash_schedule_service.calculateLocalTime(0);
+        const offset = alarm.nextDayNotificationEnabled ? 1 : 0;
+        const target_date = trash_schedule_service.calculateLocalTime(offset);
         const enable_trashes: string[] = [];
         trash_schedule!.trashData.forEach((trash_data) => {
-          const trash_type = trash_schedule_service.getEnableTrashData(trash_data, today);
+          const trash_type = trash_schedule_service.getEnableTrashData(trash_data, target_date);
           if(trash_type) {
             enable_trashes.push(trash_type.name)
           }
         });
-        const message = enable_trashes.length > 0 ? enable_trashes.join(",") : "今日出せるゴミはありません";
+        const message = enable_trashes.length > 0
+          ? enable_trashes.join(",")
+          : alarm.nextDayNotificationEnabled
+            ? "明日出せるゴミはありません"
+            : "今日出せるゴミはありません";
+        const title = alarm.nextDayNotificationEnabled ? TOMORROW_TITLE : TODAY_TITLE;
 
-        device_messages.push(new DeviceMessage(alarm.device, message));
+        device_messages.push(new DeviceMessage(alarm.device, message, title));
       }).catch((e)=>{
         console.error(`ゴミ出しスケジュールの取得でエラーが発生しました - ユーザーID: ${alarm.user.getId()}`);
         console.error(e.message || "不明なエラー");

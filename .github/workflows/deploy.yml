@@ -42,6 +42,14 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '20.x'
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+      - name: Install Dependencies
+        working-directory:  ./app
+        run: npm install -ws
+      - name: Test
+        working-directory:  ./app
+        run: npm run test -w @shared/core
       - name: Restore firebase credentials
         run: echo -n ${{ secrets.FIREBASE_CREDENTIALS }} | base64 -d > ./app/packages/trigger/firebase-config.json
       - name: CI and Build

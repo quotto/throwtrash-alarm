@@ -1,0 +1,207 @@
+openapi: 3.0.3
+info:
+  title: Throwtrash Alarm API
+  version: 1.0.0
+  description: |
+    iOS アプリ向けアラーム設定 API。
+    `next_day_notification_enabled` は後方互換のため任意項目で、未指定時は `false` として扱います。
+servers:
+  - url: https://{host}/{stage}
+    variables:
+      host:
+        default: example.execute-api.ap-northeast-1.amazonaws.com
+      stage:
+        default: dev
+tags:
+  - name: Alarm
+security:
+  - ApiKeyAuth: []
+paths:
+  /create:
+    post:
+      tags:
+        - Alarm
+      summary: アラームを新規作成
+      operationId: createAlarm
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAlarmRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: リクエストエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /update:
+    put:
+      tags:
+        - Alarm
+      summary: アラーム設定を更新
+      operationId: updateAlarm
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAlarmRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: リクエストエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /delete:
+    delete:
+      tags:
+        - Alarm
+      summary: アラーム設定を削除
+      operationId: deleteAlarm
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteAlarmRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: リクエストエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+  schemas:
+    AlarmTime:
+      type: object
+      required:
+        - hour
+        - minute
+      properties:
+        hour:
+          type: integer
+          minimum: 0
+          maximum: 23
+          example: 7
+        minute:
+          type: integer
+          minimum: 0
+          maximum: 59
+          example: 30
+    CreateAlarmRequest:
+      type: object
+      required:
+        - device_token
+        - alarm_time
+        - user_id
+        - platform
+      properties:
+        device_token:
+          type: string
+          example: fcm_device_token
+        alarm_time:
+          $ref: '#/components/schemas/AlarmTime'
+        user_id:
+          type: string
+          example: user_123
+        platform:
+          type: string
+          enum: [ios]
+          example: ios
+        next_day_notification_enabled:
+          type: boolean
+          description: |
+            翌日のゴミ出し通知を有効化するフラグ。
+            未指定時は `false`（当日基準）として扱います。
+          default: false
+          example: true
+    UpdateAlarmRequest:
+      type: object
+      required:
+        - device_token
+        - alarm_time
+      properties:
+        device_token:
+          type: string
+          example: fcm_device_token
+        alarm_time:
+          $ref: '#/components/schemas/AlarmTime'
+        next_day_notification_enabled:
+          type: boolean
+          description: |
+            翌日のゴミ出し通知を有効化するフラグ。
+            省略時は既存設定値を維持します（後方互換）。
+          example: true
+    DeleteAlarmRequest:
+      type: object
+      required:
+        - device_token
+      properties:
+        device_token:
+          type: string
+          example: fcm_device_token
+    SuccessResponse:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          example: アラームを設定しました。
+    ErrorResponse:
+      type: object
+      required:
+        - message
+        - error
+      properties:
+        message:
+          type: string
+          example: アラームの設定に失敗しました。
+        error:
+          type: string
+          example: 不明なエラー

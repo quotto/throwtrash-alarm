@@ -18,7 +18,7 @@ export class FcmSender implements MessageSender {
         return {
           token: deviceMessage.device.getToken(),
           notification: {
-            title: "今日のゴミ出し",
+            title: deviceMessage.title,
             body: deviceMessage.message
           }
         }

@@ -7,13 +7,24 @@ import { User } from '../entity/user.mjs';
 import { AlarmHistory } from '../entity/alarm-history.mjs';
 import logger from './logger.mjs';
 
-type AlarmItem = {device_token: string, alarm_time: string, user_id: string, platform: string, created_at: string, last_successful_time?: string, last_failed_time?: string}
+type AlarmItem = {
+  device_token: string,
+  alarm_time: string,
+  user_id: string,
+  platform: string,
+  next_day_notification_enabled: boolean,
+  created_at: string,
+  last_successful_time?: string,
+  last_failed_time?: string
+}
 export class DynamoDBAlarmRepository implements AlarmRepository{
   private db_client: DynamoDBDocumentClient;
   private table_name: string;
-  constructor(config: DynamoDBClientConfig, table_name: string) {
+  private alarm_time_index_name: string;
+  constructor(config: DynamoDBClientConfig, table_name: string, alarm_time_index_name: string = "alarm_time_index") {
     this.db_client = DynamoDBDocumentClient.from(new DynamoDBClient(config),{marshallOptions: { removeUndefinedValues: true }});
     this.table_name = table_name;
+    this.alarm_time_index_name = alarm_time_index_name;
   }
   async findByDeviceToken(device_token: string): Promise<Alarm | null> {
     try {
@@ -47,6 +58,7 @@ export class DynamoDBAlarmRepository implements AlarmRepository{
         new Device(result.Item.device_token || "", result.Item.platform || ""),
         new AlarmTime(result.Item.alarm_time || ""),
         new User(result.Item.user_id || ""),
+        result.Item.next_day_notification_enabled ?? false,
         alarm_history
       );
     } catch(e: any) {
@@ -61,7 +73,7 @@ export class DynamoDBAlarmRepository implements AlarmRepository{
       while(true) {
         const input = {
           TableName: this.table_name,
-          IndexName: "alarm_time_index",
+          IndexName: this.alarm_time_index_name,
           KeyConditionExpression: "alarm_time = :alarm_time",
           ExpressionAttributeValues: {
             ":alarm_time": alarm_time.formatTimeToHHMM()
@@ -91,6 +103,7 @@ export class DynamoDBAlarmRepository implements AlarmRepository{
               new Device(item.device_token, item.platform),
               new AlarmTime(item.alarm_time),
               new User(item.user_id),
+              item.next_day_notification_enabled ?? false,
               alarm_history
             ));
           } catch (e: any) {
@@ -184,6 +197,7 @@ export class DynamoDBAlarmRepository implements AlarmRepository{
       alarm_time: alarm.alarmTime.formatTimeToHHMM(),
       user_id: alarm.user.getId(),
       platform: alarm.device.getPlatform(),
+      next_day_notification_enabled: alarm.nextDayNotificationEnabled,
       created_at: alarm.alarmHistory.created_at.toISOString(),
     };
     if(alarm.alarmHistory.last_successful_time) {

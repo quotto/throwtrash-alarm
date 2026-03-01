@@ -13,6 +13,7 @@ type RequestBody= {
         hour: number;
         minute: number;
     };
+    next_day_notification_enabled?: boolean;
     user_id: string;
     platform: string;
 }
@@ -26,7 +27,7 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayEvent, _c
         const alarmTriggerConnector = new EventBridgeAlarmScheduler({}, process.env.EVENT_BRIDGE_SCHEDULER_GROUP_NAME!, process.env.ALARM_TRIGGER_FUNCTION_ARN!, process.env.ALARM_TRIGGER_FUNCTION_ROLE_ARN!);
 
         const params = event.body ? JSON.parse(event.body) : {};
-        const { device_token, alarm_time,  user_id, platform }: RequestBody = params;
+        const { device_token, alarm_time, next_day_notification_enabled, user_id, platform }: RequestBody = params;
 
         await registerAlarm(
             alarmRepository,
@@ -34,7 +35,8 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayEvent, _c
             device_token,
             new AlarmTime(alarm_time),
             user_id,
-            platform
+            platform,
+            next_day_notification_enabled
         );
         return {
             statusCode: 200,

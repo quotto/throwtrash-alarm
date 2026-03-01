@@ -33,7 +33,7 @@ resource "aws_api_gateway_usage_plan_key" "api-plan-key-prod-v1" {
 
 resource "aws_lambda_permission" "throwtrash-create-permission-apigw-v1" {
     action          = "lambda:InvokeFunction"
-    function_name   = "throwtras-alarm-create"
+    function_name   = "throwtrash-alarm-create"
     qualifier       = aws_lambda_alias.throwtrash-create-alias-v1.name
     principal       = "apigateway.amazonaws.com"
     source_arn      = "${var.api_gateway["execution_arn"]}/*/${var.api_gateway["post_method"]}/${var.api_gateway["create_path_part"]}"
@@ -41,7 +41,7 @@ resource "aws_lambda_permission" "throwtrash-create-permission-apigw-v1" {
 
 resource "aws_lambda_permission" "throwtrash-delete-permission-apigw-v1" {
     action          = "lambda:InvokeFunction"
-    function_name   = "throwtras-alarm-delete"
+    function_name   = "throwtrash-alarm-delete"
     qualifier       = aws_lambda_alias.throwtrash-delete-alias-v1.name
     principal       = "apigateway.amazonaws.com"
     source_arn      = "${var.api_gateway["execution_arn"]}/*/${var.api_gateway["delete_method"]}/${var.api_gateway["delete_path_part"]}"
@@ -50,7 +50,7 @@ resource "aws_lambda_permission" "throwtrash-delete-permission-apigw-v1" {
 
 resource "aws_lambda_permission" "throwtrash-update-permission-apigw-v1" {
     action          = "lambda:InvokeFunction"
-    function_name   = "throwtras-alarm-update"
+    function_name   = "throwtrash-alarm-update"
     qualifier       = aws_lambda_alias.throwtrash-update-alias-v1.name
     principal       = "apigateway.amazonaws.com"
     source_arn      = "${var.api_gateway["execution_arn"]}/*/${var.api_gateway["put_method"]}/${var.api_gateway["update_path_part"]}"
@@ -58,19 +58,19 @@ resource "aws_lambda_permission" "throwtrash-update-permission-apigw-v1" {
 
 resource "aws_lambda_alias" "throwtrash-create-alias-v1" {
     name = aws_api_gateway_stage.api-stage-prod-v1.stage_name
-    function_name = "throwtras-alarm-create"
+    function_name = "throwtrash-alarm-create"
     function_version = "16"
 }
 
 resource "aws_lambda_alias" "throwtrash-delete-alias-v1" {
     name = aws_api_gateway_stage.api-stage-prod-v1.stage_name
-    function_name = "throwtras-alarm-delete"
+    function_name = "throwtrash-alarm-delete"
     function_version = "17"
 }
 
 resource "aws_lambda_alias" "throwtrash-update-alias-v1" {
     name = aws_api_gateway_stage.api-stage-prod-v1.stage_name
-    function_name = "throwtras-alarm-update"
+    function_name = "throwtrash-alarm-update"
     function_version = "16"
 }
 

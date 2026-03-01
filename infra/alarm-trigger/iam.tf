@@ -46,6 +46,17 @@ resource "aws_iam_policy" "throwtrash-alarm-trigger-lambda-policy" {
             "Resource": [
                 "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${aws_lambda_function.throwtrash-alarm-trigger-lambda.function_name}:*"
             ]
+        },
+        {
+            "Sid": "SQSPolicy",
+            "Effect": "Allow",
+            "Resource": [
+                "${var.delete-failed-alarms-sqs-arn}"
+            ],
+            "Action": [
+                "sqs:ListQueues",
+                "sqs:SendMessage"
+            ]
         }
     ]
 }

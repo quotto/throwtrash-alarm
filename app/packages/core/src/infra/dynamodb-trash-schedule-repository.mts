@@ -2,6 +2,7 @@ import { DynamoDBDocumentClient, GetCommand } from '@aws-sdk/lib-dynamodb';
 import { TrashScheduleRepository } from '../usecase/trash-schedule-repository.mjs';
 import { DynamoDBClient, DynamoDBClientConfig } from '@aws-sdk/client-dynamodb';
 import { TrashSchedule } from 'trash-common';
+import logger from './logger.mjs';
 export class DynamoDBTrashScheduleRepository implements TrashScheduleRepository {
   private db: DynamoDBDocumentClient;
   constructor(dbconfig: DynamoDBClientConfig, private readonly table_name: string, private readonly shared_table_name: string) {
@@ -15,17 +16,19 @@ export class DynamoDBTrashScheduleRepository implements TrashScheduleRepository 
           id: user_id
         }
       };
-      console.debug(input);
+      logger.debug('dynamodb-trash-schedule-repository', 'findTrashScheduleByUserId', 'ユーザーのゴミ捨てスケジュールを取得します', {data: input});
       const result = await this.db.send(new GetCommand(input));
       if (result.$metadata.httpStatusCode != 200) {
-        throw new Error('ユーザーのゴミ捨てスケジュールの取得に失敗しました');
+        const message = `APIの呼び出しに失敗しました - ステータスコード: ${result.$metadata.httpStatusCode}`;
+        logger.error('dynamodb-trash-schedule-repository', 'findTrashScheduleByUserId', message, {error: result});
+        throw new Error(message);
       }
       if (!result.Item) {
         return null;
       }
 
       if(result.Item.shared_id){
-        console.log(`共有スケジュールが設定されています - ${user_id}, ${result.Item.shared_id}`)
+        logger.info('dynamodb-trash-schedule-repository', 'findTrashScheduleByUserId', '共有スケジュールが設定されています',{user_id: user_id, shared_id: result.Item.shared_id});
 
         const sharedInput = {
           TableName: this.shared_table_name,
@@ -33,12 +36,14 @@ export class DynamoDBTrashScheduleRepository implements TrashScheduleRepository 
             shared_id: result.Item.shared_id
           }
         };
-        console.debug(sharedInput);
+        logger.debug('dynamodb-trash-schedule-repository', 'findTrashScheduleByUserId', '共有スケジュールを取得します', {data: sharedInput});
 
         const sharedResult = await this.db.send(new GetCommand(sharedInput));
 
         if(sharedResult.$metadata.httpStatusCode != 200){
-          throw new Error('共有スケジュールの取得に失敗しました');
+          const message = `APIの呼び出しに失敗しました - ステータスコード: ${sharedResult.$metadata.httpStatusCode}`;
+          logger.error('dynamodb-trash-schedule-repository', 'findTrashScheduleByUserId', message, {error: sharedResult});
+          throw new Error(message);
         }
 
         return sharedResult.Item ? {
@@ -52,7 +57,7 @@ export class DynamoDBTrashScheduleRepository implements TrashScheduleRepository 
         } as TrashSchedule;
       }
     } catch (e: any) {
-      console.error(e.message || "不明なエラー")
+      logger.error('dynamodb-trash-schedule-repository', 'findTrashScheduleByUserId', 'ゴミ出しスケジュールの取得に失敗しました', {error: e});
       throw e;
     }
   }

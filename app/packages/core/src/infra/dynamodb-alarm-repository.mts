@@ -5,6 +5,7 @@ import { Alarm, AlarmTime } from '../entity/alarm.mjs';
 import { Device } from '../entity/device.mjs';
 import { User } from '../entity/user.mjs';
 import { AlarmHistory } from '../entity/alarm-history.mjs';
+import logger from './logger.mjs';
 
 type AlarmItem = {
   device_token: string,
@@ -34,12 +35,14 @@ export class DynamoDBAlarmRepository implements AlarmRepository{
         }
       });
       const result = await this.db_client.send(input);
-      console.log(result);
+      logger.info('dynamodb-alarm-repository', 'findByDeviceToken', 'アラームデータを取得しました', {data: result});
       if(result.$metadata.httpStatusCode != 200) {
-        throw new Error(`APIの呼び出しに失敗しました - ステータスコード: ${result.$metadata.httpStatusCode}`);
+        const message = `APIの呼び出しに失敗しました - ステータスコード: ${result.$metadata.httpStatusCode}`;
+        logger.error('dynamodb-alarm-repository', 'findByDeviceToken', message, {error: result});
+        throw new Error(message);
       }
       if(!result.Item) {
-        console.warn(`デバイストークンに一致するアラームデータが見つかりませんでした: ${device_token}`);
+        logger.warn('dynamodb-alarm-repository', 'findByDeviceToken', 'デバイストークンに一致するアラームデータが見つかりませんでした', {device_token: device_token});
         return null;
       }
       const { created_at, last_successful_time, last_failed_time } = result.Item;
@@ -59,9 +62,7 @@ export class DynamoDBAlarmRepository implements AlarmRepository{
         alarm_history
       );
     } catch(e: any) {
-      console.error("アラームデータの取得でエラーが発生しました")
-      console.error(e.message || "不明なエラー");
-      console.error(e.message || "不明なエラー");
+      logger.error('dynamodb-alarm-repository', 'findByDeviceToken', 'アラームデータの取得に失敗しました', {error: e});
       throw e;
     }
   }
@@ -83,9 +84,11 @@ export class DynamoDBAlarmRepository implements AlarmRepository{
           input.ExclusiveStartKey = last_evaluated_key;
         }
         const result = await this.db_client.send(new QueryCommand(input));
-        console.log(result);
+        logger.info('dynamodb-alarm-repository', 'listByAlarmTime', 'アラームデータを取得しました', {data: result});
         if(result.$metadata.httpStatusCode != 200 || !result.Items) {
-          throw new Error(`APIの呼び出しに失敗しました - ステータスコード: ${result.$metadata.httpStatusCode}`);
+          const message = `APIの呼び出しに失敗しました - ステータスコード: ${result.$metadata.httpStatusCode}`;
+          logger.error('dynamodb-alarm-repository', 'listByAlarmTime', message, {error: result});
+          throw new Error(message);
         }
         result.Items.forEach((item: any) => {
           const { created_at, last_successful_time, last_failed_time } = item;
@@ -104,9 +107,7 @@ export class DynamoDBAlarmRepository implements AlarmRepository{
               alarm_history
             ));
           } catch (e: any) {
-            console.error(item);
-            console.error("不正なデータが取得されました。結果から除外します。")
-            console.error(e.message || "不明なエラー");
+            logger.error('dynamodb-alarm-repository', 'listByAlarmTime', '不正なデータが取得されました。結果から除外します。', {data: item, error: e});
           }
         });
         if(!result.LastEvaluatedKey) {
@@ -116,8 +117,7 @@ export class DynamoDBAlarmRepository implements AlarmRepository{
       }
       return alarms;
     } catch(e: any) {
-      console.error("アラームデータの取得でエラーが発生しました")
-      console.error(e.message || "不明なエラー");
+      logger.error('dynamodb-alarm-repository', 'listByAlarmTime', 'アラームデータの取得に失敗しました', {error: e});
       throw e;
     }
   }
@@ -129,17 +129,19 @@ export class DynamoDBAlarmRepository implements AlarmRepository{
         Item: this.convertAlarmToItem(alarm)
       }));
       if(result.$metadata.httpStatusCode != 200) {
-        throw new Error(`APIの呼び出しに失敗しました - ステータスコード: ${result.$metadata.httpStatusCode}`);
+        const message = `APIの呼び出しに失敗しました - ステータスコード: ${result.$metadata.httpStatusCode}`;
+        logger.error('dynamodb-alarm-repository', 'save', message, {error: result});
+        throw new Error(message);
       }
       return true;
     } catch(e: any) {
-      console.error("アラームのデータ登録に失敗しました");
-      console.error(e.message || "不明なエラー");
+      logger.error('dynamodb-alarm-repository', 'save', 'アラームのデータ登録に失敗しました', {error: e});
       throw e;
     }
   }
 
   async saveAll(alarms: Alarm[]): Promise<void> {
+    logger.debug('dynamodb-alarm-repository', 'saveAll', 'アラームデータを保存します', {data: alarms});
     // 25件ずつリクエストを送信
     for(let i = 0; i < alarms.length; i += 25) {
       const write_requests = alarms.slice(i, i + 25).map((alarm) => {
@@ -156,14 +158,15 @@ export class DynamoDBAlarmRepository implements AlarmRepository{
           }
         }));
         if(result.$metadata.httpStatusCode != 200) {
-          throw new Error(`APIの呼び出しに失敗しました - ステータスコード: ${result.$metadata.httpStatusCode}`);
+          const message = `APIの呼び出しに失敗しました - ステータスコード: ${result.$metadata.httpStatusCode}`
+          logger.error('dynamodb-alarm-repository', 'saveAll', message, {error: result});
+          throw new Error(message);
         }
         if(result.UnprocessedItems && result.UnprocessedItems[this.table_name]) {
-          console.error(`保存に失敗したデータがあります: ${JSON.stringify(result.UnprocessedItems[this.table_name])}`);
+          logger.error('dynamodb-alarm-repository', 'saveAll', '保存に失敗したデータがあります', {data: result.UnprocessedItems[this.table_name]});
         }
       } catch(e: any) {
-        console.error("アラームのデータ登録に失敗しました");
-        console.error(e.message || "不明なエラー");
+        logger.error('dynamodb-alarm-repository', 'saveAll', 'アラームのデータ登録に失敗しました', {error: e});
       }
     }
   }
@@ -177,12 +180,13 @@ export class DynamoDBAlarmRepository implements AlarmRepository{
         }
       }));
       if(result.$metadata.httpStatusCode != 200) {
-        throw new Error(`APIの呼び出しに失敗しました - ステータスコード: ${result.$metadata.httpStatusCode}`);
+        const message = `APIの呼び出しに失敗しました - ステータスコード: ${result.$metadata.httpStatusCode}`
+        logger.error('dynamodb-alarm-repository', 'delete', message, {error: result});
+        throw new Error(message);
       }
       return true;
     } catch(e: any) {
-      console.error("アラームデータの削除でエラーが発生しました");
-      console.error(e.message || "不明なエラー");
+      logger.error('dynamodb-alarm-repository', 'delete', 'アラームデータの削除に失敗しました', {error: e});
       throw e;
     }
   }

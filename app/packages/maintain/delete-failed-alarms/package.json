@@ -1,0 +1,26 @@
+{
+  "name": "@maintain/delete-failed-alarms",
+  "version": "1.0.0",
+  "main": "index.mjs",
+  "scripts": {
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+    "build": "rm -rf ./dist && tsc"
+  },
+  "author": "",
+  "license": "Apache-2.0",
+  "description": "",
+  "dependencies": {
+    "@shared/core": "^1.0.0",
+    "aws-lambda": "^1.0.7",
+    "source-map-support": "^0.5.21"
+  },
+  "devDependencies": {
+    "@aws-sdk/client-dynamodb": "^3.705.0",
+    "@aws-sdk/client-sqs": "^3.699.0",
+    "@types/aws-lambda": "^8.10.146",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
+    "@types/jest": "^29.5.14"
+  },
+  "type": "module"
+}

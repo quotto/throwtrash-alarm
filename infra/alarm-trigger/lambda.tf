@@ -16,15 +16,17 @@ resource "aws_lambda_function" "throwtrash-alarm-trigger-lambda" {
     layers = [ var.layer_arn ]
 
     publish = var.environment == "prod"
-    timeout = 300
 
+    timeout = 300
 
     environment {
         variables = {
             ALARM_TABLE_NAME = var.alarm_table_name
+            ALARM_TIME_INDEX_NAME = "alarm_time_index_v2"
             TRASH_SCHEDULE_TABLE_NAME = var.trash_schedule_table_name
             SHARED_TRASH_SCHEDULE_TABLE_NAME = var.shared_trash_schedule_table_name
             GOOGLE_APPLICATION_CREDENTIALS= "/var/task/firebase-config.json"
+            ALARM_DELETE_QUEUE_URL = var.delete-failed-alarms-sqs-url
         }
 
     }
@@ -32,6 +34,7 @@ resource "aws_lambda_function" "throwtrash-alarm-trigger-lambda" {
     logging_config {
         log_format = "JSON"
         log_group = aws_cloudwatch_log_group.throwtrash-alarm-trigger-log-group.name
+        application_log_level = var.environment == "prod" ? "INFO" : "DEBUG"
     }
     tags = local.tags
 }

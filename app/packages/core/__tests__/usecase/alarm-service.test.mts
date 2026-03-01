@@ -71,6 +71,31 @@ describe('AlarmService', () => {
             expect(save_argument.alarmHistory.last_successful_time).toBeUndefined();
             expect(save_argument.alarmHistory.last_failed_time).toBeUndefined();
         });
+        test('登録時に翌日通知フラグが保存されること', async () => {
+            const mockAlarmRepository: AlarmRepository = jest.mocked<AlarmRepository>({
+                save: jest.fn().mockReturnValue(true) as any,
+                saveAll: jest.fn((alarms: Alarm[]) => Promise.resolve()),
+                listByAlarmTime: jest.fn().mockReturnValue([]) as any,
+                findByDeviceToken: jest.fn().mockReturnValue(null) as any,
+                delete: jest.fn().mockReturnValue(true) as any
+            }) as jest.Mocked<AlarmRepository>;
+            const mockAlarmTriggerConnector: AlarmScheduler = jest.mocked<AlarmScheduler>({
+                findByTime: jest.fn().mockReturnValue(null) as any,
+                create: jest.fn().mockReturnValue(true) as any
+            }) as jest.Mocked<AlarmScheduler>;
+
+            await registerAlarm(
+                mockAlarmRepository,
+                mockAlarmTriggerConnector,
+                'deviceToken',
+                new AlarmTime({hour: 7,minute: 0}),
+                'aaaaaa',
+                'ios',
+                true
+            );
+            const save_argument = (mockAlarmRepository.save as jest.Mock).mock.calls[0][0] as Alarm;
+            expect(save_argument.nextDayNotificationEnabled).toBe(true);
+        });
         test("正常に更新できること-アラームトリガーが存在する場合は新規に作成しない-alarmTime以外のデータ項目は維持されること", async () => {
             // テストのためDateのモックを解除
             global.Date = date_constructor;
@@ -81,8 +106,7 @@ describe('AlarmService', () => {
                 findByDeviceToken: jest.fn().mockReturnValue(new Alarm(
                     new Device('deviceToken','ios'),
                     new AlarmTime({hour: 6,minute:0}),
-                    new User('aaaaaa'),
-                    new AlarmHistory(
+                    new User('aaaaaa'), false, new AlarmHistory(
                         new Date('2024-02-01T00:00:00.000Z'),
                         {
                             last_successful_time: new Date('2024-03-01T12:00:00.000Z'), last_failed_time: new Date('2024-04-01T23:59:59.999Z')
@@ -168,6 +192,54 @@ describe('AlarmService', () => {
             }).rejects.toThrow(UpdateError);
             expect(mockAlarmTriggerConnector.create).not.toHaveBeenCalled();
             expect(mockAlarmRepository.save).not.toHaveBeenCalled();
+        });
+        test('更新時に翌日通知フラグが未指定の場合は既存値を維持すること', async () => {
+            const mockAlarmRepository: AlarmRepository = jest.mocked<AlarmRepository>({
+                save: jest.fn().mockReturnValue(true) as any,
+                saveAll: jest.fn((alarms: Alarm[]) => Promise.resolve()),
+                listByAlarmTime: jest.fn().mockReturnValue([]) as any,
+                findByDeviceToken: jest.fn().mockReturnValue(
+                    new Alarm(new Device('deviceToken', 'ios'), new AlarmTime({hour: 6, minute: 0}), new User('aaaaaa'), true)
+                ) as any,
+                delete: jest.fn().mockReturnValue(true) as any
+            }) as jest.Mocked<AlarmRepository>;
+
+            const mockAlarmTriggerConnector: AlarmScheduler = jest.mocked<AlarmScheduler>({
+                findByTime: jest.fn().mockReturnValue('alarm-trigger-0600') as any,
+                create: jest.fn().mockReturnValue(true) as any
+            }) as jest.Mocked<AlarmScheduler>;
+
+            await updateAlarm(mockAlarmRepository, mockAlarmTriggerConnector, 'deviceToken', new AlarmTime({hour: 6, minute: 0}));
+
+            const save_argument = (mockAlarmRepository.save as jest.Mock).mock.calls[0][0] as Alarm;
+            expect(save_argument.nextDayNotificationEnabled).toBe(true);
+        });
+        test('更新時に翌日通知フラグを明示した場合は上書きされること', async () => {
+            const mockAlarmRepository: AlarmRepository = jest.mocked<AlarmRepository>({
+                save: jest.fn().mockReturnValue(true) as any,
+                saveAll: jest.fn((alarms: Alarm[]) => Promise.resolve()),
+                listByAlarmTime: jest.fn().mockReturnValue([]) as any,
+                findByDeviceToken: jest.fn().mockReturnValue(
+                    new Alarm(new Device('deviceToken', 'ios'), new AlarmTime({hour: 6, minute: 0}), new User('aaaaaa'), false)
+                ) as any,
+                delete: jest.fn().mockReturnValue(true) as any
+            }) as jest.Mocked<AlarmRepository>;
+
+            const mockAlarmTriggerConnector: AlarmScheduler = jest.mocked<AlarmScheduler>({
+                findByTime: jest.fn().mockReturnValue('alarm-trigger-0600') as any,
+                create: jest.fn().mockReturnValue(true) as any
+            }) as jest.Mocked<AlarmScheduler>;
+
+            await updateAlarm(
+                mockAlarmRepository,
+                mockAlarmTriggerConnector,
+                'deviceToken',
+                new AlarmTime({hour: 6, minute: 0}),
+                true
+            );
+
+            const save_argument = (mockAlarmRepository.save as jest.Mock).mock.calls[0][0] as Alarm;
+            expect(save_argument.nextDayNotificationEnabled).toBe(true);
         });
     });
     describe('アラームの削除', () => {

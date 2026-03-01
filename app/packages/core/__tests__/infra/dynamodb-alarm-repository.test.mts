@@ -20,6 +20,7 @@ describe('DynamoDBAlarmRepository', () => {
           platform: 'ios',
           alarm_time: '0800',
           user_id: 'dummy_user_id',
+          next_day_notification_enabled: false,
           created_at: '2022-01-01T00:00:00.000Z'
         },
         $metadata: {
@@ -35,6 +36,7 @@ describe('DynamoDBAlarmRepository', () => {
       expect(result?.alarmHistory.created_at.toISOString()).toEqual('2022-01-01T00:00:00.000Z');
       expect(result?.alarmHistory.last_successful_time).toBeUndefined();
       expect(result?.alarmHistory.last_failed_time).toBeUndefined();
+      expect(result?.nextDayNotificationEnabled).toBe(false);
     });
     test('DB上のlast_successful_time,last_failed_timeが存在する場合は戻り値に値が設定されること。', async () => {
       ddbMock.on(GetCommand).resolves({
@@ -43,6 +45,7 @@ describe('DynamoDBAlarmRepository', () => {
           platform: 'ios',
           alarm_time: '0800',
           user_id: 'dummy_user_id',
+          next_day_notification_enabled: false,
           created_at: '2021-01-01T00:00:00.000Z',
           last_successful_time: '2022-01-01T00:00:00.000Z',
           last_failed_time: '2023-01-01T00:00:00.000Z'
@@ -56,6 +59,24 @@ describe('DynamoDBAlarmRepository', () => {
       expect(result?.alarmHistory.created_at.toISOString()).toEqual('2021-01-01T00:00:00.000Z');
       expect(result?.alarmHistory.last_successful_time?.toISOString()).toEqual('2022-01-01T00:00:00.000Z');
       expect(result?.alarmHistory.last_failed_time?.toISOString()).toEqual('2023-01-01T00:00:00.000Z');
+      expect(result?.nextDayNotificationEnabled).toBe(false);
+    });
+    test('next_day_notification_enabledが欠損している旧データでもfalseとして取得できること', async () => {
+      ddbMock.on(GetCommand).resolves({
+        Item: {
+          device_token: 'dummy_device_token',
+          platform: 'ios',
+          alarm_time: '0800',
+          user_id: 'dummy_user_id',
+          created_at: '2021-01-01T00:00:00.000Z'
+        },
+        $metadata: {
+          httpStatusCode: 200
+        }
+      });
+      const alarmRepository = new DynamoDBAlarmRepository({}, 'dummy_table_name');
+      const result = await alarmRepository.findByDeviceToken('dummy_device_token');
+      expect(result?.nextDayNotificationEnabled).toBe(false);
     });
     test('ステータスコードが200以外の場合はエラーを投げる', async () => {
       ddbMock.on(GetCommand).resolves({
@@ -91,6 +112,7 @@ describe('DynamoDBAlarmRepository', () => {
             platform: 'ios',
             alarm_time: '0800',
             user_id: 'dummy_user_id',
+            next_day_notification_enabled: false,
             created_at: '2022-01-01T00:00:00.000Z',
           }
         ],
@@ -116,6 +138,7 @@ describe('DynamoDBAlarmRepository', () => {
             platform: 'ios',
             alarm_time: '0800',
             user_id: 'dummy_user_id',
+            next_day_notification_enabled: false,
             created_at: '2022-01-01T00:00:00.000Z',
             last_successful_time: '2022-12-01T00:00:00.000Z',
           },
@@ -124,6 +147,7 @@ describe('DynamoDBAlarmRepository', () => {
             platform: 'ios',
             alarm_time: '0800',
             user_id: 'dummy_user_id2',
+            next_day_notification_enabled: false,
             created_at: '2022-02-01T00:00:00.000Z',
             last_failed_time: '2023-12-01T00:00:00.000Z',
           }
@@ -139,6 +163,27 @@ describe('DynamoDBAlarmRepository', () => {
       expect(result[0].device.getPlatform()).toBe('ios');
       expect(result[0].user.getId()).toBe('dummy_user_id');
       expect(result[0].alarmTime).toEqual(new AlarmTime('0800'));
+      expect(result[0].nextDayNotificationEnabled).toBe(false);
+    });
+    test('next_day_notification_enabledがtrueのデータを取得できること', async () => {
+      ddbMock.on(libdynamodb.QueryCommand).resolves({
+        Items: [
+          {
+            device_token: 'dummy_device',
+            platform: 'ios',
+            alarm_time: '0800',
+            user_id: 'dummy_user_id',
+            next_day_notification_enabled: true,
+            created_at: '2022-01-01T00:00:00.000Z'
+          }
+        ],
+        $metadata: {
+          httpStatusCode: 200
+        }
+      });
+      const alarmRepository = new DynamoDBAlarmRepository({}, 'dummy_table_name');
+      const result = await alarmRepository.listByAlarmTime(new AlarmTime('0800'));
+      expect(result[0].nextDayNotificationEnabled).toBe(true);
     });
     test('last_evaluated_keyが存在する場合', async () => {
       const dummy_table_name = 'dummy_table_name';
@@ -158,6 +203,7 @@ describe('DynamoDBAlarmRepository', () => {
             platform: 'ios',
             alarm_time: '0800',
             user_id: 'dummy_user_id',
+            next_day_notification_enabled: false,
             created_at: '2022-01-01T00:00:00.000Z',
           },
           {
@@ -165,6 +211,7 @@ describe('DynamoDBAlarmRepository', () => {
             platform: 'ios',
             alarm_time: '0800',
             user_id: 'dummy_user_id2',
+            next_day_notification_enabled: false,
             created_at: '2022-01-01T00:00:00.000Z',
           }
         ],
@@ -191,6 +238,7 @@ describe('DynamoDBAlarmRepository', () => {
             platform: 'ios',
             alarm_time: '0800',
             user_id: 'dummy_user_id_3',
+            next_day_notification_enabled: false,
             created_at: '2022-01-01T00:00:00.000Z',
           }
         ],
@@ -207,6 +255,34 @@ describe('DynamoDBAlarmRepository', () => {
       expect(result[2].device.getToken()).toBe('dummy_device_3');
       expect(ddbMock.calls().length).toBe(2);
     });
+    test('インデックス名が指定された場合は指定したGSIを使用する', async () => {
+      ddbMock.on(libdynamodb.QueryCommand, {
+        TableName: 'dummy_table_name',
+        IndexName: 'alarm_time_index_v2',
+        KeyConditionExpression: "alarm_time = :alarm_time",
+        ExpressionAttributeValues: {
+          ":alarm_time": '0800'
+        }
+      }).resolves({
+        Items: [
+          {
+            device_token: 'dummy_device',
+            platform: 'ios',
+            alarm_time: '0800',
+            user_id: 'dummy_user_id',
+            next_day_notification_enabled: true,
+            created_at: '2022-01-01T00:00:00.000Z',
+          }
+        ],
+        $metadata: {
+          httpStatusCode: 200
+        }
+      });
+      const alarmRepository = new DynamoDBAlarmRepository({}, 'dummy_table_name', 'alarm_time_index_v2');
+      const result = await alarmRepository.listByAlarmTime(new AlarmTime('0800'));
+      expect(result.length).toBe(1);
+      expect(result[0].nextDayNotificationEnabled).toBe(true);
+    });
     test('複数のデータが存在する場合に不正なデータが含まれている場合は当該のデータを除外して取得する', async () => {
       ddbMock.on(libdynamodb.QueryCommand).resolves({
         Items: [
@@ -215,6 +291,7 @@ describe('DynamoDBAlarmRepository', () => {
             platform: 'ios',
             alarm_time: '0800',
             user_id: 'dummy_user_id',
+            next_day_notification_enabled: false,
             created_at: '2022-01-01T00:00:00.000Z',
           },
           {
@@ -222,6 +299,7 @@ describe('DynamoDBAlarmRepository', () => {
             platform: 'invalid_platform',
             alarm_time: '0800',
             user_id: 'dummy_user_id2',
+            next_day_notification_enabled: false,
             created_at: '2022-01-01T00:00:00.000Z',
           },
           {
@@ -229,6 +307,7 @@ describe('DynamoDBAlarmRepository', () => {
             platform: 'ios',
             alarm_time: 'invalid_alarm_time',
             user_id: 'dummy_user_id3',
+            next_day_notification_enabled: false,
             created_at: '2022-01-01T00:00:00.000Z',
           },
           {
@@ -236,6 +315,7 @@ describe('DynamoDBAlarmRepository', () => {
             platform: 'ios',
             alarm_time: '0800',
             user_id: 'dummy_user_id4',
+            next_day_notification_enabled: false,
             created_at: '2022-01-01T00:00:00.000Z',
           }
         ],
@@ -287,6 +367,7 @@ describe('DynamoDBAlarmRepository', () => {
             platform: 'ios',
             alarm_time: '0800',
             user_id: 'dummy_user_id',
+            next_day_notification_enabled: false,
             created_at: '2022-01-01T00:00:00.000Z',
           },
           {
@@ -294,6 +375,7 @@ describe('DynamoDBAlarmRepository', () => {
             platform: 'ios',
             alarm_time: '0800',
             user_id: 'dummy_user_id2',
+            next_day_notification_enabled: false,
             created_at: '2022-01-01T00:00:00.000Z',
           }
         ],
@@ -334,6 +416,7 @@ describe('DynamoDBAlarmRepository', () => {
             platform: 'ios',
             alarm_time: '0800',
             user_id: 'dummy_user_id',
+            next_day_notification_enabled: false,
             created_at: '2022-01-01T00:00:00.000Z'
           }
         }).resolves({
@@ -356,6 +439,7 @@ describe('DynamoDBAlarmRepository', () => {
           platform: 'ios',
           alarm_time: '0800',
           user_id: 'dummy_user_id',
+          next_day_notification_enabled: false,
           created_at: '2022-01-01T00:00:00.000Z',
           last_successful_time: '2022-01-01T00:00:00.000Z',
           last_failed_time: '2023-01-01T00:00:00.000Z'
@@ -366,7 +450,7 @@ describe('DynamoDBAlarmRepository', () => {
         }
       });
       const alarmRepository = new DynamoDBAlarmRepository({}, 'dummy_table_name');
-      const result = await alarmRepository.save(new Alarm(new Device('dummy_device', 'ios'),new AlarmTime('0800'),new User('dummy_user_id'), new AlarmHistory(new Date('2022-01-01T00:00:00.000Z'), {last_successful_time: new Date('2022-01-01T00:00:00.000Z'), last_failed_time: new Date('2023-01-01T00:00:00.000Z')})));
+      const result = await alarmRepository.save(new Alarm(new Device('dummy_device', 'ios'),new AlarmTime('0800'),new User('dummy_user_id'), false, new AlarmHistory(new Date('2022-01-01T00:00:00.000Z'), {last_successful_time: new Date('2022-01-01T00:00:00.000Z'), last_failed_time: new Date('2023-01-01T00:00:00.000Z')})));
       expect(result).toBe(true);
     });
     test('created_at指定有りの場合は指定時刻でデータが保存されること', async () => {
@@ -377,6 +461,7 @@ describe('DynamoDBAlarmRepository', () => {
           platform: 'ios',
           alarm_time: '0800',
           user_id: 'dummy_user_id',
+          next_day_notification_enabled: false,
           created_at: '2023-01-01T00:00:00.000Z'
         }
       }).resolves({
@@ -385,7 +470,7 @@ describe('DynamoDBAlarmRepository', () => {
         }
       });
       const alarmRepository = new DynamoDBAlarmRepository({}, 'dummy_table_name');
-      const result = await alarmRepository.save(new Alarm(new Device('dummy_device', 'ios'),new AlarmTime('0800'),new User('dummy_user_id'), new AlarmHistory(new Date('2023-01-01T00:00:00.000Z'))));
+      const result = await alarmRepository.save(new Alarm(new Device('dummy_device', 'ios'),new AlarmTime('0800'),new User('dummy_user_id'), false, new AlarmHistory(new Date('2023-01-01T00:00:00.000Z'))));
       expect(result).toBe(true);
     });
     test('ステータスコードが200以外の場合はエラーを投げる', async () => {
@@ -431,6 +516,7 @@ describe('DynamoDBAlarmRepository', () => {
                   platform: 'ios',
                   alarm_time: '0800',
                   user_id: 'dummy_user_id',
+                  next_day_notification_enabled: false,
                   created_at: '2022-02-01T00:00:00.000Z'
                 }
               }
@@ -443,7 +529,7 @@ describe('DynamoDBAlarmRepository', () => {
         }
       });
       const alarmRepository = new DynamoDBAlarmRepository({}, 'dummy_table_name');
-      await alarmRepository.saveAll([new Alarm(new Device('dummy_device_token', 'ios'),new AlarmTime('0800'),new User('dummy_user_id'), new AlarmHistory(new Date('2022-02-01T00:00:00.000Z')))]);
+      await alarmRepository.saveAll([new Alarm(new Device('dummy_device_token', 'ios'),new AlarmTime('0800'),new User('dummy_user_id'), false, new AlarmHistory(new Date('2022-02-01T00:00:00.000Z')))]);
     });
     test('25件以下の一括保存が正常に実行されること', async () => {
       ddbMock.on(libdynamodb.BatchWriteCommand, {
@@ -456,6 +542,7 @@ describe('DynamoDBAlarmRepository', () => {
                   platform: 'ios',
                   alarm_time: '0800',
                   user_id: 'dummy_user_id',
+                  next_day_notification_enabled: false,
                   created_at: '2022-01-01T00:00:00.000Z'
                 }
               }
@@ -467,6 +554,7 @@ describe('DynamoDBAlarmRepository', () => {
                   platform: 'ios',
                   alarm_time: '0800',
                   user_id: 'dummy_user_id2',
+                  next_day_notification_enabled: false,
                   created_at: '2022-02-01T00:00:00.000Z'
                 }
               }
@@ -481,7 +569,7 @@ describe('DynamoDBAlarmRepository', () => {
       const alarmRepository = new DynamoDBAlarmRepository({}, 'dummy_table_name');
       await alarmRepository.saveAll([
         new Alarm(new Device('dummy_device_token', 'ios'),new AlarmTime('0800'),new User('dummy_user_id')),
-        new Alarm(new Device('dummy_device_token2', 'ios'),new AlarmTime('0800'),new User('dummy_user_id2'), new AlarmHistory(new Date('2022-02-01T00:00:00.000Z')))
+        new Alarm(new Device('dummy_device_token2', 'ios'),new AlarmTime('0800'),new User('dummy_user_id2'), false, new AlarmHistory(new Date('2022-02-01T00:00:00.000Z')))
       ]);
     });
     test('26件以上の一括保存が正常に実行されること', async () => {
@@ -495,6 +583,7 @@ describe('DynamoDBAlarmRepository', () => {
               platform: alarm.device.getPlatform(),
               alarm_time: alarm.alarmTime.formatTimeToHHMM(),
               user_id: alarm.user.getId(),
+              next_day_notification_enabled: false,
               created_at: alarm.alarmHistory.created_at.toISOString()
             }
           }
@@ -508,6 +597,7 @@ describe('DynamoDBAlarmRepository', () => {
               platform: alarm.device.getPlatform(),
               alarm_time: alarm.alarmTime.formatTimeToHHMM(),
               user_id: alarm.user.getId(),
+              next_day_notification_enabled: false,
               created_at: alarm.alarmHistory.created_at.toISOString()
             }
           }
@@ -544,6 +634,7 @@ describe('DynamoDBAlarmRepository', () => {
               platform: alarm.device.getPlatform(),
               alarm_time: alarm.alarmTime.formatTimeToHHMM(),
               user_id: alarm.user.getId(),
+              next_day_notification_enabled: false,
               created_at: alarm.alarmHistory.created_at.toISOString()
             }
           }
@@ -557,6 +648,7 @@ describe('DynamoDBAlarmRepository', () => {
               platform: alarm.device.getPlatform(),
               alarm_time: alarm.alarmTime.formatTimeToHHMM(),
               user_id: alarm.user.getId(),
+              next_day_notification_enabled: false,
               created_at: alarm.alarmHistory.created_at.toISOString()
             }
           }
@@ -593,6 +685,7 @@ describe('DynamoDBAlarmRepository', () => {
               platform: alarm.device.getPlatform(),
               alarm_time: alarm.alarmTime.formatTimeToHHMM(),
               user_id: alarm.user.getId(),
+              next_day_notification_enabled: false,
               created_at: alarm.alarmHistory.created_at.toISOString()
             }
           }
@@ -606,6 +699,7 @@ describe('DynamoDBAlarmRepository', () => {
               platform: alarm.device.getPlatform(),
               alarm_time: alarm.alarmTime.formatTimeToHHMM(),
               user_id: alarm.user.getId(),
+              next_day_notification_enabled: false,
               created_at: alarm.alarmHistory.created_at.toISOString()
             }
           }

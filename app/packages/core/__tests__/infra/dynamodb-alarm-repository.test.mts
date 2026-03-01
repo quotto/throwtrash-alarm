@@ -255,6 +255,34 @@ describe('DynamoDBAlarmRepository', () => {
       expect(result[2].device.getToken()).toBe('dummy_device_3');
       expect(ddbMock.calls().length).toBe(2);
     });
+    test('インデックス名が指定された場合は指定したGSIを使用する', async () => {
+      ddbMock.on(libdynamodb.QueryCommand, {
+        TableName: 'dummy_table_name',
+        IndexName: 'alarm_time_index_v2',
+        KeyConditionExpression: "alarm_time = :alarm_time",
+        ExpressionAttributeValues: {
+          ":alarm_time": '0800'
+        }
+      }).resolves({
+        Items: [
+          {
+            device_token: 'dummy_device',
+            platform: 'ios',
+            alarm_time: '0800',
+            user_id: 'dummy_user_id',
+            next_day_notification_enabled: true,
+            created_at: '2022-01-01T00:00:00.000Z',
+          }
+        ],
+        $metadata: {
+          httpStatusCode: 200
+        }
+      });
+      const alarmRepository = new DynamoDBAlarmRepository({}, 'dummy_table_name', 'alarm_time_index_v2');
+      const result = await alarmRepository.listByAlarmTime(new AlarmTime('0800'));
+      expect(result.length).toBe(1);
+      expect(result[0].nextDayNotificationEnabled).toBe(true);
+    });
     test('複数のデータが存在する場合に不正なデータが含まれている場合は当該のデータを除外して取得する', async () => {
       ddbMock.on(libdynamodb.QueryCommand).resolves({
         Items: [

@@ -19,9 +19,11 @@ type AlarmItem = {
 export class DynamoDBAlarmRepository implements AlarmRepository{
   private db_client: DynamoDBDocumentClient;
   private table_name: string;
-  constructor(config: DynamoDBClientConfig, table_name: string) {
+  private alarm_time_index_name: string;
+  constructor(config: DynamoDBClientConfig, table_name: string, alarm_time_index_name: string = "alarm_time_index") {
     this.db_client = DynamoDBDocumentClient.from(new DynamoDBClient(config),{marshallOptions: { removeUndefinedValues: true }});
     this.table_name = table_name;
+    this.alarm_time_index_name = alarm_time_index_name;
   }
   async findByDeviceToken(device_token: string): Promise<Alarm | null> {
     try {
@@ -70,7 +72,7 @@ export class DynamoDBAlarmRepository implements AlarmRepository{
       while(true) {
         const input = {
           TableName: this.table_name,
-          IndexName: "alarm_time_index",
+          IndexName: this.alarm_time_index_name,
           KeyConditionExpression: "alarm_time = :alarm_time",
           ExpressionAttributeValues: {
             ":alarm_time": alarm_time.formatTimeToHHMM()

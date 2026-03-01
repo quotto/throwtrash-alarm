@@ -16,6 +16,12 @@ resource "aws_dynamodb_table" "throwtrash-alarm-table" {
     projection_type    = "INCLUDE"
     non_key_attributes = [ "device_token","user_id","platform","created_at","last_successful_time","last_failed_time" ]
   }
+  global_secondary_index {
+    name               = "alarm_time_index_v2"
+    hash_key           = "alarm_time"
+    projection_type    = "INCLUDE"
+    non_key_attributes = [ "device_token","user_id","platform","created_at","last_successful_time","last_failed_time","next_day_notification_enabled" ]
+  }
   tags = local.tags
 }
 

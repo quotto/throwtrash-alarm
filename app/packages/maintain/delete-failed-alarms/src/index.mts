@@ -38,6 +38,8 @@ const processRecord = async (record: SQSRecord) => {
     new Device(requestData.alarm.device_token, requestData.alarm.platform),
     new AlarmTime(requestData.alarm.alarm_time),
     new User(requestData.alarm.user_id),
+    // この削除判定では nextDayNotificationEnabled を参照しないため、互換維持の既定値 false を固定で渡す。
+    false,
     new AlarmHistory(
       new Date(requestData.alarm.created_at),
       {

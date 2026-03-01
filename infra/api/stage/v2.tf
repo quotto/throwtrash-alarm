@@ -74,11 +74,7 @@ resource "aws_lambda_alias" "throwtrash-update-alias-v2" {
     function_version = var.update_lambda["version"]
 }
 
-resource "aws_api_gateway_deployment" "api-deployment-prod" {
-    rest_api_id = var.api_gateway["api_id"]
-}
-
-resource "aws_api_gateway_base_path_mapping" "api-base-path-mapping" {
+resource "aws_api_gateway_base_path_mapping" "api-base-path-mapping-v2" {
   api_id      = var.api_gateway.api_id
   stage_name  = aws_api_gateway_stage.api-stage-prod-v2.stage_name
   domain_name = aws_api_gateway_domain_name.api-domain-name.domain_name
